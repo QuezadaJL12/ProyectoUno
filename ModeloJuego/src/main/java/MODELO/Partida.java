@@ -109,4 +109,16 @@ public class Partida {
 
     public void agregarJugador(Jugador j) { jugadores.add(j); }
     public Jugador getJugadorActual() { return jugadores.get(indiceTurnoActual); }
+
+public Carta getCimaDescarte() {
+    return descarte.peek();
+}
+
+public Color getColorActual() {
+    return colorActual;
+}
+
+public List<Jugador> getJugadores() {
+    return jugadores;
+}
 }

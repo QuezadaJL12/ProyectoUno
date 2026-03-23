@@ -4,10 +4,14 @@
  */
 package dtos;
 
+import java.io.Serializable;
+
 /**
  *
  * @author Chino
  */
-public class InfoOponenteDTO {
-    
+public class InfoOponenteDTO implements Serializable {
+    public String nombre;
+    public int cantidadCartas;
+    public boolean suTurno;
 }
