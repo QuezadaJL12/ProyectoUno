@@ -1,0 +1,10 @@
+Cartas\TipoCarta.class
+MODELO\Jugador.class
+Cartas\Carta.class
+Cartas\CartaComodin.class
+Cartas\CartaNumero.class
+Cartas\Color.class
+MODELO\FabricaMazo.class
+MODELO\Partida.class
+Cartas\CartaAccion.class
+MODELO\Partida$1.class
