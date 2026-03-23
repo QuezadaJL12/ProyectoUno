@@ -9,5 +9,5 @@ package Cartas;
  * @author Chino
  */
 public enum TipoCarta {
-    NUMERO, SALTO, REVERSA, TOMA_DOS, CAMBIO_COLOR, TOMA_CUATRO
+    NUMERO, SALTO, REVERSA, TOMA_DOS, CAMBIO_COLOR, TOMA_CUATRO,BLOQUEO
 }

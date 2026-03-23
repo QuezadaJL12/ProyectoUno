@@ -11,12 +11,20 @@ package Cartas;
 public class CartaComodin extends Carta {
 
     public CartaComodin(String id, Color color, TipoCarta tipo) {
-        super(id, color, tipo); 
+        super(id, color, tipo);
     }
 
     @Override
     public boolean esJugable(Carta cima, Color colorActivo) {
-     
-        return true; 
+
+        return true;
+    }
+
+    @Override
+    public String getFotoId() {
+        if (this.getTipo() == TipoCarta.TOMA_CUATRO) {
+            return "Carta_MasCuatro";
+        }
+        return "Carta_Comodin";
     }
 }

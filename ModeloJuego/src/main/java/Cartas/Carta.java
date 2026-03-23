@@ -25,6 +25,7 @@ public abstract class Carta {
     public Color getColor() { return color; }
     public TipoCarta getTipo() { return tipo; }
     public String getId() { return id; }
+    public abstract String getFotoId();
 
     /**
      * Método abstracto que define la regla de compatibilidad.

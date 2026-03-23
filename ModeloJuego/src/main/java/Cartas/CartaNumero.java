@@ -23,10 +23,23 @@ public class CartaNumero extends Carta {
 
     @Override
     public boolean esJugable(Carta cima, Color colorActivo) {
-        // Regla: Mismo color o mismo número
+  
         if (cima instanceof CartaNumero) {
             return this.getColor() == colorActivo || this.valor == ((CartaNumero) cima).getValor();
         }
         return this.getColor() == colorActivo;
+    }
+
+    
+    @Override
+    public String getFotoId() {
+     
+        String colorStr = this.getColor().toString().toLowerCase();
+        
+     
+        String colorFormateado = colorStr.substring(0, 1).toUpperCase() + colorStr.substring(1);
+        
+   
+        return this.valor + "_" + colorFormateado;
     }
 }
