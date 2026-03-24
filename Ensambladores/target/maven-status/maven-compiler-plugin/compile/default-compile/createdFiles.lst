@@ -1,3 +1,5 @@
-dtos\InfoOponenteDTO.class
 mappers\PartidaMapper.class
 dtos\EstadoJuegoDTO.class
+dtos\AccionDTO$TipoAccion.class
+dtos\InfoOponenteDTO.class
+dtos\AccionDTO.class

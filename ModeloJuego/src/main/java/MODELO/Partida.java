@@ -34,32 +34,53 @@ public class Partida {
     }
 
     public void iniciarJuego() {
-        if (jugadores.size() < 2) throw new RuntimeException("Faltan jugadores");
+        if (jugadores.size() < 2) throw new RuntimeException("Faltan jugadores para iniciar");
+        
         Collections.shuffle(mazo);
+        
+        
         for (Jugador j : jugadores) {
-            for (int i = 0; i < 7; i++) j.recibirCarta(mazo.pop());
+            j.getMano().clear(); 
+            for (int i = 0; i < 7; i++) {
+                if (!mazo.isEmpty()) j.recibirCarta(mazo.pop());
+            }
         }
+
+        
         Carta inicio = mazo.pop();
         while (inicio.getColor() == Color.ESPECIAL) {
             mazo.insertElementAt(inicio, 0);
             inicio = mazo.pop();
         }
+        
         descarte.push(inicio);
         this.colorActual = inicio.getColor();
     }
 
     public void realizarJugada(String idJugador, int indiceCarta, Color nuevoColor) {
         Jugador jugadorActual = jugadores.get(indiceTurnoActual);
-        if (!jugadorActual.getId().equals(idJugador)) throw new RuntimeException("No es tu turno");
+        
+       
+        if (!jugadorActual.getId().equals(idJugador)) {
+            throw new RuntimeException("¡No es tu turno! Es turno de: " + jugadorActual.getNombre());
+        }
 
         Carta carta = jugadorActual.getMano().get(indiceCarta);
-        if (!carta.esJugable(descarte.peek(), colorActual)) throw new RuntimeException("Jugada inválida");
+        Carta cima = descarte.peek();
 
+        
+        if (!carta.esJugable(cima, colorActual)) {
+            throw new RuntimeException("La carta " + carta.getFotoId() + " no puede jugarse sobre " + cima.getFotoId());
+        }
+
+     
         jugadorActual.getMano().remove(indiceCarta);
         descarte.push(carta);
         
+      
         if (carta.getColor() == Color.ESPECIAL) {
-            this.colorActual = nuevoColor;
+            if (nuevoColor == null) this.colorActual = Color.ROJO; // Default por si no mandaron nada
+            else this.colorActual = nuevoColor;
         } else {
             this.colorActual = carta.getColor();
         }
@@ -68,25 +89,41 @@ public class Partida {
     }
 
     private void procesarEfecto(Carta carta) {
+      
         switch (carta.getTipo()) {
-            case SALTO -> { avanzarTurno(); avanzarTurno(); }
+            case SALTO -> {
+                avanzarTurno(); 
+                avanzarTurno();
+            }
             case REVERSA -> {
                 this.sentidoHorario = !sentidoHorario;
-                if (jugadores.size() == 2) avanzarTurno();
+                if (jugadores.size() == 2) {
+                    avanzarTurno();
+                }
                 avanzarTurno();
             }
             case TOMA_DOS -> {
                 avanzarTurno();
                 for(int i=0; i<2; i++) robarCartaPara(getJugadorActual());
-                avanzarTurno();
+                avanzarTurno(); 
             }
             case TOMA_CUATRO -> {
-                avanzarTurno();
+                avanzarTurno(); 
                 for(int i=0; i<4; i++) robarCartaPara(getJugadorActual());
-                avanzarTurno();
+                avanzarTurno(); 
             }
-            default -> avanzarTurno();
+            default -> {
+                avanzarTurno(); 
+            }
         }
+    }
+
+    public void robarCarta(String idJugador) {
+        Jugador jugadorActual = jugadores.get(indiceTurnoActual);
+        if (!jugadorActual.getId().equals(idJugador)) throw new RuntimeException("No es tu turno para robar");
+        
+        robarCartaPara(jugadorActual);
+        avanzarTurno(); 
     }
 
     private void robarCartaPara(Jugador j) {
@@ -95,6 +132,7 @@ public class Partida {
     }
 
     private void rellenarMazo() {
+        if (descarte.size() <= 1) return; 
         Carta cima = descarte.pop();
         mazo.addAll(descarte);
         descarte.clear();
@@ -107,18 +145,10 @@ public class Partida {
         indiceTurnoActual = (indiceTurnoActual + paso + jugadores.size()) % jugadores.size();
     }
 
+    // Getters y Setters
     public void agregarJugador(Jugador j) { jugadores.add(j); }
     public Jugador getJugadorActual() { return jugadores.get(indiceTurnoActual); }
-
-public Carta getCimaDescarte() {
-    return descarte.peek();
-}
-
-public Color getColorActual() {
-    return colorActual;
-}
-
-public List<Jugador> getJugadores() {
-    return jugadores;
-}
+    public Carta getCimaDescarte() { return descarte.peek(); }
+    public Color getColorActual() { return colorActual; }
+    public List<Jugador> getJugadores() { return jugadores; }
 }

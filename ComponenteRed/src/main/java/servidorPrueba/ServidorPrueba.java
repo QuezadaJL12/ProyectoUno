@@ -3,6 +3,7 @@ package servidorPrueba;
 import MODELO.Partida;
 import MODELO.Jugador;
 import Cartas.Carta;
+import dtos.AccionDTO;
 import dtos.EstadoJuegoDTO;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -17,57 +18,117 @@ import java.util.List;
  */
 public class ServidorPrueba {
 
-    public static void main(String[] args) {
-        // 1. Inicializamos la lógica real de tu proyecto ModeloJuego
-        Partida partida = new Partida("P1");
-        
-        // Agregamos al Chino y a un Bot para poder iniciar
-        Jugador jugadorChino = new Jugador("1", "Chino");
-        partida.agregarJugador(jugadorChino);
-        partida.agregarJugador(new Jugador("2", "Bot"));
-        
-        // Reparte 7 cartas y pone la primera en el descarte
-        partida.iniciarJuego();
+    // Listas para manejar a los dos jugadores reales
+    private static List<ObjectOutputStream> salidas = new ArrayList<>();
+    private static List<Jugador> jugadoresReal = new ArrayList<>();
+    private static Partida partida = new Partida("P1");
 
+    public static void main(String[] args) {
         try (ServerSocket servidor = new ServerSocket(5000)) {
             System.out.println("Servidor UNO iniciado en el puerto 5000...");
-            System.out.println("Esperando al Chino...");
+            System.out.println("Esperando a 2 jugadores  para iniciar...");
 
-            while (true) {
-                Socket cliente = servidor.accept();
-                System.out.println("¡Cliente conectado desde " + cliente.getInetAddress() + "!");
+         
+            while (jugadoresReal.size() < 2) {
+                Socket socket = servidor.accept();
+                System.out.println("¡Jugador conectado desde " + socket.getInetAddress() + "!");
 
-                ObjectOutputStream salida = new ObjectOutputStream(cliente.getOutputStream());
-                ObjectInputStream entrada = new ObjectInputStream(cliente.getInputStream());
+                ObjectOutputStream salida = new ObjectOutputStream(socket.getOutputStream());
+                ObjectInputStream entrada = new ObjectInputStream(socket.getInputStream());
 
-                // 2. Creamos el DTO basado en el estado REAL de la Partida
-                EstadoJuegoDTO estado = new EstadoJuegoDTO();
+               
+                String id = String.valueOf(jugadoresReal.size() + 1);
+                String nombre = "Jugador " + id;
+                Jugador nuevoJugador = new Jugador(id, nombre);
                 
-                // Obtenemos la carta de la cima (importante que Carta tenga getFotoId)
-                Carta cima = partida.getCimaDescarte();
-                estado.cartaCimaId = cima.getFotoId(); 
-                estado.colorActual = partida.getColorActual().toString();
-                
-                // Convertimos la mano de objetos Carta a una lista de Strings (IDs de fotos)
-                List<String> manoIds = new ArrayList<>();
-                for (Carta c : jugadorChino.getMano()) {
-                    manoIds.add(c.getFotoId());
-                }
-                estado.misCartasIds = manoIds;
-                
-                // Datos de turno
-                estado.esMiTurno = (partida.getJugadorActual() == jugadorChino);
-                estado.turnoDeNombre = partida.getJugadorActual().getNombre();
+                partida.agregarJugador(nuevoJugador);
+                jugadoresReal.add(nuevoJugador);
+                salidas.add(salida);
 
-                // 3. Enviamos el estado real al cliente
-                salida.writeObject(estado);
-                salida.flush();
-                
-                System.out.println("Datos reales de la partida enviados con éxito.");
+               
+                iniciarEscuchaCliente(entrada, nuevoJugador);
             }
+
+      
+            partida.iniciarJuego();
+            System.out.println("¡Juego iniciado! Repartiendo cartas...");
+            actualizarTodos();
+
         } catch (IOException e) {
             System.err.println("Error en el servidor: " + e.getMessage());
-            e.printStackTrace();
         }
+    }
+
+private static void iniciarEscuchaCliente(ObjectInputStream entrada, Jugador j) {
+        new Thread(() -> {
+            try {
+                while (true) {
+                    Object recibido = entrada.readObject();
+                    if (recibido instanceof AccionDTO) {
+                        AccionDTO accion = (AccionDTO) recibido;
+                        
+                        
+                        if (partida.getJugadorActual().getId().equals(j.getId())) {
+                            
+                            // CASO 1: JUGAR CARTA
+                            if (accion.tipo == AccionDTO.TipoAccion.JUGAR_CARTA) {
+                                try {
+                                    partida.realizarJugada(j.getId(), accion.indiceCarta, null);
+                                    System.out.println(j.getNombre() + " realizó una jugada.");
+                                } catch (Exception e) {
+                                    System.out.println("Movimiento inválido de " + j.getNombre() + ": " + e.getMessage());
+                                }
+                            } 
+                            
+                         
+                            else if (accion.tipo == AccionDTO.TipoAccion.ROBAR_CARTA) {
+                                try {
+                                    partida.robarCarta(j.getId());
+                                    System.out.println(j.getNombre() + " robó una carta.");
+                                } catch (Exception e) {
+                                    System.out.println("Error al robar: " + e.getMessage());
+                                }
+                            }
+                            
+                           
+                            actualizarTodos();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println(j.getNombre() + " se ha desconectado.");
+            }
+        }).start();
+    }
+
+    private static void actualizarTodos() {
+        for (int i = 0; i < salidas.size(); i++) {
+            try {
+                enviarEstado(salidas.get(i), partida, jugadoresReal.get(i));
+            } catch (IOException e) {
+                System.err.println("Error al actualizar a un jugador.");
+            }
+            
+        }
+    }
+
+    private static void enviarEstado(ObjectOutputStream salida, Partida p, Jugador j) throws IOException {
+        EstadoJuegoDTO estado = new EstadoJuegoDTO();
+        Carta cima = p.getCimaDescarte();
+        estado.cartaCimaId = cima.getFotoId();
+        estado.colorActual = p.getColorActual().toString();
+
+        List<String> manoIds = new ArrayList<>();
+        for (Carta c : j.getMano()) {
+            manoIds.add(c.getFotoId());
+        }
+        estado.misCartasIds = manoIds;
+
+        estado.esMiTurno = (p.getJugadorActual().getId().equals(j.getId()));
+        estado.turnoDeNombre = p.getJugadorActual().getNombre();
+
+        salida.reset();
+        salida.writeObject(estado);
+        salida.flush();
     }
 }

@@ -25,9 +25,11 @@ public class ClienteRed {
     public void conectar() {
         try {
             this.socket = new Socket(ip, puerto);
+            // El orden es importante: primero salida, luego entrada
             this.salida = new ObjectOutputStream(socket.getOutputStream());
             this.entrada = new ObjectInputStream(socket.getInputStream());
             iniciarEscucha();
+            System.out.println("Conectado al servidor con éxito.");
         } catch (IOException e) {
             System.err.println("Error conexión: " + e.getMessage());
         }
@@ -35,8 +37,10 @@ public class ClienteRed {
 
     public void enviarAccion(Object accion) {
         try {
-            salida.writeObject(accion);
-            salida.flush();
+            if (salida != null) {
+                salida.writeObject(accion);
+                salida.flush();
+            }
         } catch (IOException e) {
             System.err.println("Error envío: " + e.getMessage());
         }
@@ -45,14 +49,14 @@ public class ClienteRed {
     private void iniciarEscucha() {
         Thread hilo = new Thread(() -> {
             try {
-                while (true) {
+                while (!socket.isClosed()) {
                     Object recibido = entrada.readObject();
                     if (recibido instanceof EstadoJuegoDTO && controlador != null) {
                         controlador.recibirActualizacion((EstadoJuegoDTO) recibido);
                     }
                 }
             } catch (Exception e) {
-                System.out.println("Desconectado.");
+                System.out.println("Conexión cerrada o error de lectura.");
             }
         });
         hilo.setDaemon(true);
