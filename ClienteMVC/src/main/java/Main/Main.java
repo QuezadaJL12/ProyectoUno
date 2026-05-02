@@ -1,22 +1,19 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Main;
 
-import javax.swing.SwingUtilities;
+import Controlador.ControladorPrincipal;
 import vista.FrmTablero;
 
-/**
- *
- * @author Chino
- */
 public class Main {
+
     public static void main(String[] args) {
+        System.out.println("--- INICIANDO CLIENTE UNO ---");
+
       
-        SwingUtilities.invokeLater(() -> {
-            FrmTablero tablero = new FrmTablero();
-            tablero.setVisible(true);
-        });
+        FrmTablero vista = new FrmTablero();
+
+   
+        ControladorPrincipal controlador = new ControladorPrincipal(vista);
+
+        controlador.iniciar();
     }
 }

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package MODELO;
 
 import Cartas.Carta;
@@ -12,7 +8,6 @@ import java.util.List;
 import java.util.Stack;
 
 /**
- *
  * @author Chino
  */
 public class Partida {
@@ -23,6 +18,7 @@ public class Partida {
     private Color colorActual;
     private boolean sentidoHorario;
     private int indiceTurnoActual;
+    private Jugador ganador = null;
 
     public Partida(String id) {
         this.id = id;
@@ -34,10 +30,9 @@ public class Partida {
     }
 
     public void iniciarJuego() {
-        if (jugadores.size() < 2) throw new RuntimeException("Faltan jugadores para iniciar");
+        if (jugadores.size() < 2) return; 
         
         Collections.shuffle(mazo);
-        
         
         for (Jugador j : jugadores) {
             j.getMano().clear(); 
@@ -46,8 +41,9 @@ public class Partida {
             }
         }
 
-        
+        if (mazo.isEmpty()) rellenarMazo();
         Carta inicio = mazo.pop();
+        
         while (inicio.getColor() == Color.ESPECIAL) {
             mazo.insertElementAt(inicio, 0);
             inicio = mazo.pop();
@@ -57,30 +53,55 @@ public class Partida {
         this.colorActual = inicio.getColor();
     }
 
-    public void realizarJugada(String idJugador, int indiceCarta, Color nuevoColor) {
+    /**
+     * CORRECCIÓN: Ahora buscamos la carta por su ID único (fotoId) para evitar
+     * errores de índice desfasado por latencia de red.
+     */
+    public void realizarJugada(String idJugador, String idCarta, Color nuevoColor) {
+        if (hayGanador()) return; 
+
         Jugador jugadorActual = jugadores.get(indiceTurnoActual);
         
-       
         if (!jugadorActual.getId().equals(idJugador)) {
-            throw new RuntimeException("¡No es tu turno! Es turno de: " + jugadorActual.getNombre());
+            System.out.println("[SERVER] No es turno de " + idJugador);
+            return; 
         }
 
-        Carta carta = jugadorActual.getMano().get(indiceCarta);
+        // Buscamos la carta físicamente en la mano por su fotoId
+        Carta carta = null;
+        int indiceReal = -1;
+        for (int i = 0; i < jugadorActual.getMano().size(); i++) {
+            if (jugadorActual.getMano().get(i).getFotoId().equals(idCarta)) {
+                carta = jugadorActual.getMano().get(i);
+                indiceReal = i;
+                break;
+            }
+        }
+
+        if (carta == null) {
+            System.out.println("[SERVER] El jugador no tiene la carta: " + idCarta);
+            return;
+        }
+
         Carta cima = descarte.peek();
 
-        
         if (!carta.esJugable(cima, colorActual)) {
-            throw new RuntimeException("La carta " + carta.getFotoId() + " no puede jugarse sobre " + cima.getFotoId());
+            System.out.println("[SERVER] Jugada inválida: " + carta.getFotoId() + " sobre " + cima.getFotoId());
+            return;
         }
 
-     
-        jugadorActual.getMano().remove(indiceCarta);
+        // Ejecutar jugada
+        jugadorActual.getMano().remove(indiceReal);
         descarte.push(carta);
         
-      
+        if (jugadorActual.getMano().isEmpty()) {
+            this.ganador = jugadorActual;
+            return; 
+        }
+        
+        // Actualizar color de la mesa
         if (carta.getColor() == Color.ESPECIAL) {
-            if (nuevoColor == null) this.colorActual = Color.ROJO; // Default por si no mandaron nada
-            else this.colorActual = nuevoColor;
+            this.colorActual = (nuevoColor == null) ? Color.ROJO : nuevoColor;
         } else {
             this.colorActual = carta.getColor();
         }
@@ -89,7 +110,6 @@ public class Partida {
     }
 
     private void procesarEfecto(Carta carta) {
-      
         switch (carta.getTipo()) {
             case SALTO -> {
                 avanzarTurno(); 
@@ -112,15 +132,19 @@ public class Partida {
                 for(int i=0; i<4; i++) robarCartaPara(getJugadorActual());
                 avanzarTurno(); 
             }
-            default -> {
-                avanzarTurno(); 
-            }
+            default -> avanzarTurno(); 
         }
     }
 
     public void robarCarta(String idJugador) {
+        if (hayGanador()) return; 
+        
         Jugador jugadorActual = jugadores.get(indiceTurnoActual);
-        if (!jugadorActual.getId().equals(idJugador)) throw new RuntimeException("No es tu turno para robar");
+        
+        if (!jugadorActual.getId().equals(idJugador)) {
+            System.out.println("[SERVER] Intento de robo ilegal por: " + idJugador);
+            return;
+        }
         
         robarCartaPara(jugadorActual);
         avanzarTurno(); 
@@ -151,4 +175,7 @@ public class Partida {
     public Carta getCimaDescarte() { return descarte.peek(); }
     public Color getColorActual() { return colorActual; }
     public List<Jugador> getJugadores() { return jugadores; }
+    public String getId() { return id; }
+    public boolean hayGanador() { return ganador != null; }
+    public Jugador getGanador() { return ganador; }
 }

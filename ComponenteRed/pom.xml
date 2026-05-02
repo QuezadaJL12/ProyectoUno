@@ -13,16 +13,22 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.mycompany</groupId>
-            <artifactId>ModeloJuego</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
         
         <dependency>
             <groupId>com.mycompany</groupId>
             <artifactId>Ensambladores</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.mycompany</groupId>
+                    <artifactId>ModeloJuego</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>GestorPartida</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
     
