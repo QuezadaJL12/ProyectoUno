@@ -7,19 +7,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-/**
- *
- * @author Chino
- */
 public class HiloManejadorCliente implements Runnable {
-
     private Socket socket;
     private IPuertoAplicacion gestor;
     private ObjectInputStream entrada;
     private ObjectOutputStream salida;
-    private String idJugador; // ID dinámico asignado a esta conexión
+    private String idJugador;
 
-    // Constructor actualizado para recibir el ID del jugador
     public HiloManejadorCliente(Socket socket, IPuertoAplicacion gestor, String idJugador) {
         this.socket = socket;
         this.gestor = gestor;
@@ -33,60 +27,39 @@ public class HiloManejadorCliente implements Runnable {
             salida.flush();
             entrada = new ObjectInputStream(socket.getInputStream());
 
-            System.out.println("[SERVER] Atendiendo a: " + idJugador);
-
             while (true) {
                 try {
                     Object objPeticion = entrada.readObject();
-                    if (objPeticion == null) {
-                        break;
-                    }
+                    if (objPeticion == null) break;
 
                     String peticion = (String) objPeticion;
-                    System.out.println("Petición de " + idJugador + ": " + peticion);
 
-                    if (peticion.equals("ROBAR_CARTA")) {
-                        // Usamos el idJugador dinámico
-                        EstadoPartidaDTO nuevoEstado = gestor.robarCarta("partida-1", idJugador);
-                        salida.writeObject(nuevoEstado);
+                    if (peticion.equals("OBTENER_ESTADO")) {
+                        salida.writeObject(gestor.obtenerEstadoPartida("partida-1", idJugador));
                         salida.flush();
-
+                    } else if (peticion.equals("ROBAR_CARTA")) {
+                        salida.writeObject(gestor.robarCarta("partida-1", idJugador));
+                        salida.flush();
                     } else if (peticion.equals("JUGAR_CARTA")) {
                         CartaDTO cartaAJugar = (CartaDTO) entrada.readObject();
+                        String colorElegidoStr = (String) entrada.readObject();
                         
-                        // Buscamos el índice real de la carta en la mano del jugador para el gestor
-                        // Si tu gestor requiere el índice exacto, podrías obtenerlo aquí
-                        int indice = 0; 
-                        String idCarta = cartaAJugar.getFotoId();
-
-                        // Usamos el idJugador dinámico
-                        EstadoPartidaDTO nuevoEstado = gestor.jugarCarta("partida-1", idJugador, indice, idCarta);
-
+                        EstadoPartidaDTO nuevoEstado = gestor.jugarCarta("partida-1", idJugador, 0, colorElegidoStr);
+                        if (nuevoEstado == null) {
+                            nuevoEstado = gestor.obtenerEstadoPartida("partida-1", idJugador);
+                        }
                         salida.writeObject(nuevoEstado);
                         salida.flush();
                     }
                 } catch (Exception e) {
-                    System.err.println("Error en jugada de " + idJugador + ": " + e.getMessage());
-                    
-                    // IMPORTANTE: Si el gestor devuelve null por ser fuera de turno, 
-                    // mandamos el estado actual para que el cliente no se quede bloqueado
-                    EstadoPartidaDTO estadoActual = gestor.obtenerEstadoPartida("partida-1", idJugador);
-                    salida.writeObject(estadoActual);
+                    salida.writeObject(gestor.obtenerEstadoPartida("partida-1", idJugador));
                     salida.flush();
                 }
             }
-        } catch (java.io.EOFException e) {
-            System.out.println("El cliente " + idJugador + " cerró la conexión.");
         } catch (Exception e) {
-            System.err.println("Error crítico en la conexión de " + idJugador + ": " + e.getMessage());
+            System.err.println("Conexión finalizada: " + idJugador);
         } finally {
-            try {
-                if (socket != null) {
-                    socket.close();
-                }
-            } catch (Exception ex) {
-                System.err.println("Error al cerrar socket: " + ex.getMessage());
-            }
+            try { socket.close(); } catch (Exception ex) {}
         }
     }
 }

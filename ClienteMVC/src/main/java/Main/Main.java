@@ -1,19 +1,27 @@
 package Main;
 
 import Controlador.ControladorPrincipal;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import vista.FrmConfigurarJugador;
+import vista.FrmPrincipal;
 import vista.FrmTablero;
 
 public class Main {
 
-    public static void main(String[] args) {
-        System.out.println("--- INICIANDO CLIENTE UNO ---");
+public static void main(String[] args) {
+        FrmPrincipal frmPrincipal = new FrmPrincipal();
+        
+        // Evento para ir a la pantalla de JoinGame
+        frmPrincipal.btnUnirsePartida.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FrmConfigurarJugador frmConfig = new FrmConfigurarJugador();
+                frmConfig.setVisible(true);
+                frmPrincipal.dispose();
+            }
+        });
 
-      
-        FrmTablero vista = new FrmTablero();
-
-   
-        ControladorPrincipal controlador = new ControladorPrincipal(vista);
-
-        controlador.iniciar();
+        frmPrincipal.setVisible(true);
     }
 }

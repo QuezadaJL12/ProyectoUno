@@ -3,6 +3,7 @@ dtos\JugadorResumenDTO.class
 dtos\CartaDTO.class
 mappers\PartidaMapper.class
 dtos\EstadoJuegoDTO.class
+dtos\EstadoLobbyDTO.class
 dtos\AccionDTO$TipoAccion.class
 dtos\EstadoPartidaDTO.class
 dtos\InfoOponenteDTO.class

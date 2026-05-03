@@ -1,81 +1,97 @@
 package Gestor;
 
+import Cartas.Carta;
 import Cartas.Color;
-import Ensambladores.EnsambladorPartida;
+import MODELO.Jugador;
 import MODELO.Partida;
-import com.mycompany.gestorpartida.Interfaces.IPuertoAplicacion;
+import dtos.CartaDTO;
 import dtos.EstadoPartidaDTO;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-/**
- * @author Chino
- */
-public class GestorJuego implements IPuertoAplicacion {
+public class GestorJuego {
+    private Map<String, Partida> partidas = new HashMap<>();
+    private List<String> logEventos = new ArrayList<>();
 
-    private Map<String, Partida> partidasActivas;
-
-    public GestorJuego() {
-        this.partidasActivas = new HashMap<>();
-    }
-
-    public void registrarPartida(Partida p) {
-        partidasActivas.put(p.getId(), p);
-    }
-
-    @Override
-    public EstadoPartidaDTO jugarCarta(String idPartida, String idJugador, int indiceCarta, String nuevoColorStr) {
-      
-        Partida partida = partidasActivas.get(idPartida);
-        if (partida == null) return null;
-
-        Color color = null;
-        try {
-            if (nuevoColorStr != null && !nuevoColorStr.isEmpty()) {
-                color = Color.valueOf(nuevoColorStr.toUpperCase()); 
-            }
-        } catch (Exception e) {
-            color = Color.ROJO; 
+    public void registrarPartida(String idPartida, List<String> idsJugadores) {
+        Partida nuevaPartida = new Partida(idPartida);
+        for (String idJugador : idsJugadores) {
+            nuevaPartida.agregarJugador(new Jugador(idJugador, idJugador));
         }
-
-   
-        partida.realizarJugada(idJugador, String.valueOf(indiceCarta), color); 
-        
-        return EnsambladorPartida.mapear(partida, idJugador);
+        nuevaPartida.iniciarJuego();
+        partidas.put(idPartida, nuevaPartida);
+        logEventos.add("Partida " + idPartida + " iniciada.");
     }
 
-    @Override
+    public EstadoPartidaDTO jugarCarta(String idPartida, String idJugador, int indice, String idCarta, String nuevoColorStr) {
+        Partida p = partidas.get(idPartida);
+        if (p == null) return null;
+
+        Color nuevoColor = (nuevoColorStr != null) ? Color.valueOf(nuevoColorStr) : null;
+        
+        p.realizarJugada(idJugador, idCarta, nuevoColor);
+        
+        logEventos.add("Jugador " + idJugador + " jugó una carta.");
+        if (logEventos.size() > 5) logEventos.remove(0);
+
+        return obtenerEstadoPartida(idPartida, idJugador);
+    }
+    
     public EstadoPartidaDTO robarCarta(String idPartida, String idJugador) {
-        Partida partida = partidasActivas.get(idPartida);
-        if (partida == null) return null;
-
-        partida.robarCarta(idJugador);
-        return EnsambladorPartida.mapear(partida, idJugador);
-    }
-
-    @Override
-    public EstadoPartidaDTO iniciarPartida(String idPartida, String idJugadorSolicitante) {
-        Partida partida = partidasActivas.get(idPartida);
-        if (partida == null) return null;
+        Partida p = partidas.get(idPartida);
+        if (p == null) return null;
         
-        partida.iniciarJuego();
-        return EnsambladorPartida.mapear(partida, idJugadorSolicitante);
+        p.robarCarta(idJugador);
+        
+        logEventos.add("Jugador " + idJugador + " robó una carta.");
+        if (logEventos.size() > 5) logEventos.remove(0);
+        
+        return obtenerEstadoPartida(idPartida, idJugador);
     }
 
-    @Override
     public EstadoPartidaDTO obtenerEstadoPartida(String idPartida, String idJugador) {
-        Partida partida = partidasActivas.get(idPartida);
-        if (partida == null) return null;
+        Partida p = partidas.get(idPartida);
+        if (p == null) return null;
+        
+        EstadoPartidaDTO dto = new EstadoPartidaDTO();
 
-        return EnsambladorPartida.mapear(partida, idJugador);
+        for (Jugador j : p.getJugadores()) {
+            if (j.getId().equals(idJugador)) {
+                dto.setMiMano(convertirAManoDTO(j.getMano()));
+                break;
+            }
+        }
+
+        Carta cima = p.getCimaDescarte();
+        dto.setCartaEnCima(new CartaDTO(
+            cima.getColor().toString(),
+            cima.getTipo().toString(),
+            cima.getFotoId()
+        ));
+
+        dto.setColorActual(p.getColorActual().toString());
+        dto.setIdJugadorTurno(p.getJugadorActual().getId());
+        dto.setHistorialPartida(new ArrayList<>(logEventos));
+        dto.setHayGanador(p.hayGanador());
+        
+        if (p.hayGanador()) {
+            dto.setIdGanador(p.getGanador().getId());
+        }
+
+        return dto;
     }
 
-    @Override
-    public void abandonarPartida(String idPartida, String idJugador) {
-        Partida partida = partidasActivas.get(idPartida);
-        if (partida != null) {
-            System.out.println("[GESTOR] El jugador " + idJugador + " ha abandonado la partida " + idPartida);
-       
+    private List<CartaDTO> convertirAManoDTO(List<Carta> mano) {
+        List<CartaDTO> lista = new ArrayList<>();
+        for (Carta c : mano) {
+            lista.add(new CartaDTO(
+                c.getColor().toString(),
+                c.getTipo().toString(),
+                c.getFotoId()
+            ));
         }
+        return lista;
     }
 }

@@ -2,11 +2,13 @@ package Controlador;
 
 import Cliente.ClienteRed;
 import dtos.EstadoPartidaDTO;
-import dtos.CartaDTO; 
+import dtos.CartaDTO;
+import Cartas.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import vista.FrmTablero;
-import javax.swing.Timer; // Importante para la actualización automática
+import javax.swing.Timer;
+import javax.swing.JOptionPane;
 
 public class ControladorPrincipal {
     
@@ -14,14 +16,13 @@ public class ControladorPrincipal {
     private ClienteRed red;
     private EstadoPartidaDTO estadoActual;
     private Timer timerActualizador;
+    private String idPropio;
 
-    public ControladorPrincipal(FrmTablero vista) {
+    public ControladorPrincipal(FrmTablero vista, String idPropio) {
         this.vista = vista;
+        this.idPropio = idPropio;
         this.red = new ClienteRed();
-        
-        // Intentamos conectar al iniciar
         this.red.conectar();
-        
         configurarEventos();
         iniciarTimerSincronizacion();
     }
@@ -29,15 +30,9 @@ public class ControladorPrincipal {
     public void iniciar() {
         vista.setLocationRelativeTo(null);
         vista.setVisible(true);
-        
-        // Pedimos el estado inicial nada más empezar
         refrescarEstadoAutomatico();
     }
 
-    /**
-     * Configura un Timer que pregunta al servidor por cambios cada 1.5 segundos.
-     * Esto permite ver las jugadas de otros jugadores.
-     */
     private void iniciarTimerSincronizacion() {
         timerActualizador = new Timer(1500, new ActionListener() {
             @Override
@@ -49,7 +44,6 @@ public class ControladorPrincipal {
     }
 
     private void refrescarEstadoAutomatico() {
-        // Suponiendo que añadiste pedirEstadoActual() a tu ClienteRed
         EstadoPartidaDTO nuevoEstado = red.pedirEstadoActual();
         if (nuevoEstado != null) {
             estadoActual = nuevoEstado;
@@ -58,18 +52,13 @@ public class ControladorPrincipal {
     }
 
     private void configurarEventos() {
-        // Evento para Robar Carta
         vista.btnRobarCarta.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("[CONTROLADOR] Jugador pidió robar carta...");
                 EstadoPartidaDTO nuevoEstado = red.pedirRobarCarta();
-                
                 if (nuevoEstado != null) {
                     estadoActual = nuevoEstado;
                     actualizarPantalla();
-                } else {
-                    System.err.println("No se pudo obtener el estado del servidor.");
                 }
             }
         });
@@ -78,73 +67,82 @@ public class ControladorPrincipal {
     private void actualizarPantalla() {
         if (estadoActual == null) return;
 
-        System.out.println("--- ACTUALIZANDO TABLERO VISUAL ---");
-        
-        // Actualizar etiqueta de color y turno
-        vista.lblColorActual.setText("Color actual: " + estadoActual.getColorActual());
-        
-        // Mostrar quién tiene el turno (Opcional si tienes el label)
-        // vista.lblTurno.setText("Turno de: " + estadoActual.getIdJugadorTurno());
+        boolean miTurno = estadoActual.getIdJugadorTurno().equals(idPropio);
 
-        // Actualizar carta en la mesa
+        if (vista.lblTurno != null) {
+            vista.lblTurno.setText(miTurno ? "¡ES TU TURNO!" : "Turno de: " + estadoActual.getIdJugadorTurno());
+        }
+        
+        if (vista.btnRobarCarta != null) {
+            vista.btnRobarCarta.setEnabled(miTurno);
+        }
+
+        vista.lblColorActual.setText("Color actual: " + estadoActual.getColorActual());
+
+        if (vista.txtAreaLog != null) {
+            StringBuilder sb = new StringBuilder();
+            for (String evento : estadoActual.getHistorialPartida()) {
+                sb.append(evento).append("\n");
+            }
+            vista.txtAreaLog.setText(sb.toString());
+        }
+
         if (estadoActual.getCartaEnCima() != null) {
-            String nombreFotoCima = estadoActual.getCartaEnCima().getFotoId(); 
-            java.net.URL urlImagen = getClass().getResource("/Cartas/" + nombreFotoCima + ".png");
-            
-            if (urlImagen != null) {
-                vista.lblCartaMesa.setIcon(new javax.swing.ImageIcon(urlImagen));
+            String id = estadoActual.getCartaEnCima().getFotoId();
+            java.net.URL url = getClass().getResource("/Cartas/" + id + ".png");
+            if (url != null) {
+                vista.lblCartaMesa.setIcon(new javax.swing.ImageIcon(url));
                 vista.lblCartaMesa.setText(""); 
             } else {
                 vista.lblCartaMesa.setIcon(null);
-                vista.lblCartaMesa.setText(nombreFotoCima); 
+                vista.lblCartaMesa.setText(id); 
             }
         }
 
-        // Limpiar y repintar la mano del jugador
         vista.pnlMiMano.removeAll(); 
-        
-        for (int i = 0; i < estadoActual.getMiMano().size(); i++) {
-            CartaDTO carta = estadoActual.getMiMano().get(i);
+        for (CartaDTO carta : estadoActual.getMiMano()) {
             String nombreCarta = carta.getFotoId();
+            javax.swing.JButton btn = new javax.swing.JButton();
+            java.net.URL url = getClass().getResource("/Cartas/" + nombreCarta + ".png");
             
-            javax.swing.JButton btnCarta = new javax.swing.JButton();
-            
-            java.net.URL urlMano = getClass().getResource("/Cartas/" + nombreCarta + ".png");
-            if (urlMano != null) {
-                btnCarta.setIcon(new javax.swing.ImageIcon(urlMano));
-                btnCarta.setBorderPainted(false); 
-                btnCarta.setContentAreaFilled(false);
+            if (url != null) {
+                btn.setIcon(new javax.swing.ImageIcon(url));
+                btn.setBorderPainted(false);
+                btn.setContentAreaFilled(false);
             } else {
-                btnCarta.setText(nombreCarta);
+                btn.setText(nombreCarta);
             }
             
-            // Evento para Jugar Carta al hacer clic en ella
-            btnCarta.addActionListener(new ActionListener() {
+            btn.setEnabled(miTurno);
+
+            btn.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("[CONTROLADOR] Intentando jugar la carta: " + nombreCarta);
-                    
-                    EstadoPartidaDTO nuevoEstado = red.pedirJugarCarta(carta);
-                    
-                    if (nuevoEstado != null) {
-                        estadoActual = nuevoEstado;
+                    Color colorElegido = null;
+                    if (carta.getColor() != null && carta.getColor().toString().equals("ESPECIAL")) {
+                        String[] opciones = {"ROJO", "AZUL", "VERDE", "AMARILLO"};
+                        int sel = JOptionPane.showOptionDialog(vista, "Elige color", "Comodín",
+                                JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+                        if (sel != -1) colorElegido = Color.valueOf(opciones[sel]);
+                        else return;
+                    }
+
+                    EstadoPartidaDTO n = red.pedirJugarCarta(carta, colorElegido);
+                    if (n != null) {
+                        estadoActual = n;
                         actualizarPantalla(); 
-                    } else {
-                        System.err.println("El servidor rechazó la jugada o falló la conexión.");
                     }
                 }
             });
-            
-            vista.pnlMiMano.add(btnCarta);
+            vista.pnlMiMano.add(btn);
         }
 
         vista.pnlMiMano.revalidate();
         vista.pnlMiMano.repaint();
         
-        // Verificación de ganador
         if (estadoActual.isHayGanador()) {
-            timerActualizador.stop(); // Detenemos el refresco automático
-            javax.swing.JOptionPane.showMessageDialog(vista, "¡El juego terminó! Ganó: " + estadoActual.getIdGanador());
+            timerActualizador.stop();
+            JOptionPane.showMessageDialog(vista, "¡El juego terminó! Ganó: " + estadoActual.getIdGanador());
         }
     }
 }

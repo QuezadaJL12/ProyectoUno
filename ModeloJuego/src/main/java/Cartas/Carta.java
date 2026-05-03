@@ -27,9 +27,6 @@ public abstract class Carta {
     public String getId() { return id; }
     public abstract String getFotoId();
 
-    /**
-     * Método abstracto que define la regla de compatibilidad.
-     * Se implementará de forma distinta en CartaNumero y CartaAccion.
-     */
+   
     public abstract boolean esJugable(Carta cimaPila, Color colorActivo);
 }

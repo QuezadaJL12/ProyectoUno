@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Ensambladores;
 
 import Cartas.Carta;
@@ -13,25 +9,17 @@ import dtos.JugadorResumenDTO;
 import java.util.ArrayList;
 import java.util.List;
 
-
-
-/**
- *
- * @author Chino
- */
 public class EnsambladorPartida {
-    
 
     public static EstadoPartidaDTO mapear(Partida partida, String idJugadorSolicitante) {
         EstadoPartidaDTO dto = new EstadoPartidaDTO();
 
-    
         Carta cima = partida.getCimaDescarte();
         dto.setCartaEnCima(new CartaDTO(cima.getColor().name(), cima.getTipo().name(), cima.getFotoId()));
         dto.setColorActual(partida.getColorActual().name());
-        dto.setIdJugadorEnTurno(partida.getJugadorActual().getId());
         
-     
+        dto.setIdJugadorTurno(partida.getJugadorActual().getId());
+        
         dto.setHayGanador(partida.hayGanador());
         if (partida.hayGanador()) {
             dto.setIdGanador(partida.getGanador().getId());
@@ -41,10 +29,8 @@ public class EnsambladorPartida {
         List<CartaDTO> miMano = new ArrayList<>();
 
         for (Jugador j : partida.getJugadores()) {
-            
             rivales.add(new JugadorResumenDTO(j.getId(), j.getNombre(), j.getMano().size()));
 
-        
             if (j.getId().equals(idJugadorSolicitante)) {
                 for (Carta c : j.getMano()) {
                     miMano.add(new CartaDTO(c.getColor().name(), c.getTipo().name(), c.getFotoId()));

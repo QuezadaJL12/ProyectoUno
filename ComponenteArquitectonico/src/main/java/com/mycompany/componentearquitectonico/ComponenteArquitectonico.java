@@ -1,9 +1,10 @@
 package com.mycompany.componentearquitectonico;
 
 import Gestor.GestorJuego;
-import MODELO.Partida;
-import MODELO.Jugador;
+import com.mycompany.gestorpartida.Interfaces.IPuertoAplicacion;
 import servidor.ServidorUNO;
+import java.util.Arrays;
+import java.util.List;
 
 public class ComponenteArquitectonico {
 
@@ -13,19 +14,16 @@ public class ComponenteArquitectonico {
         GestorJuego gestor = new GestorJuego();
         
         System.out.println("Preparando partida de prueba...");
-        Partida partidaPrueba = new Partida("partida-1");
         
-       
-        partidaPrueba.agregarJugador(new Jugador("jugador-1", "Chino")); 
-        partidaPrueba.agregarJugador(new Jugador("jugador-2", "Rival"));
+        // Creamos la lista de IDs de los jugadores esperados
+        List<String> jugadores = Arrays.asList("jugador-1", "jugador-2");
         
-        partidaPrueba.iniciarJuego(); 
+        // El gestor se encarga de instanciar la Partida y agregar los jugadores
+        gestor.registrarPartida("partida-1", jugadores);
         
-        gestor.registrarPartida(partidaPrueba); 
         System.out.println("[OK] Partida 'partida-1' registrada y lista.");
-      
 
-        ServidorUNO servidor = new ServidorUNO(gestor);
+        ServidorUNO servidor = new ServidorUNO((IPuertoAplicacion) gestor);
         System.out.println("[OK] Servidor de red configurado.");
 
         System.out.println("Arrancando Sockets...");

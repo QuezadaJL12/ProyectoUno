@@ -6,10 +6,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
+import servicios.ValidadorReglas;
 
-/**
- * @author Chino
- */
 public class Partida {
     private String id;
     private List<Jugador> jugadores;
@@ -19,6 +17,7 @@ public class Partida {
     private boolean sentidoHorario;
     private int indiceTurnoActual;
     private Jugador ganador = null;
+    private ValidadorReglas validador;
 
     public Partida(String id) {
         this.id = id;
@@ -27,6 +26,7 @@ public class Partida {
         this.descarte = new Stack<>();
         this.sentidoHorario = true;
         this.indiceTurnoActual = 0;
+        this.validador = new ValidadorReglas();
     }
 
     public void iniciarJuego() {
@@ -53,45 +53,25 @@ public class Partida {
         this.colorActual = inicio.getColor();
     }
 
-    /**
-     * CORRECCIÓN: Ahora buscamos la carta por su ID único (fotoId) para evitar
-     * errores de índice desfasado por latencia de red.
-     */
     public void realizarJugada(String idJugador, String idCarta, Color nuevoColor) {
         if (hayGanador()) return; 
 
         Jugador jugadorActual = jugadores.get(indiceTurnoActual);
         
         if (!jugadorActual.getId().equals(idJugador)) {
-            System.out.println("[SERVER] No es turno de " + idJugador);
             return; 
         }
 
-        // Buscamos la carta físicamente en la mano por su fotoId
-        Carta carta = null;
-        int indiceReal = -1;
-        for (int i = 0; i < jugadorActual.getMano().size(); i++) {
-            if (jugadorActual.getMano().get(i).getFotoId().equals(idCarta)) {
-                carta = jugadorActual.getMano().get(i);
-                indiceReal = i;
-                break;
-            }
-        }
-
-        if (carta == null) {
-            System.out.println("[SERVER] El jugador no tiene la carta: " + idCarta);
-            return;
-        }
+        Carta carta = buscarCartaEnMano(jugadorActual, idCarta);
+        if (carta == null) return;
 
         Carta cima = descarte.peek();
 
-        if (!carta.esJugable(cima, colorActual)) {
-            System.out.println("[SERVER] Jugada inválida: " + carta.getFotoId() + " sobre " + cima.getFotoId());
+        if (!validador.esMovimientoValido(carta, cima, colorActual)) {
             return;
         }
 
-        // Ejecutar jugada
-        jugadorActual.getMano().remove(indiceReal);
+        jugadorActual.getMano().remove(carta);
         descarte.push(carta);
         
         if (jugadorActual.getMano().isEmpty()) {
@@ -99,7 +79,6 @@ public class Partida {
             return; 
         }
         
-        // Actualizar color de la mesa
         if (carta.getColor() == Color.ESPECIAL) {
             this.colorActual = (nuevoColor == null) ? Color.ROJO : nuevoColor;
         } else {
@@ -138,13 +117,8 @@ public class Partida {
 
     public void robarCarta(String idJugador) {
         if (hayGanador()) return; 
-        
         Jugador jugadorActual = jugadores.get(indiceTurnoActual);
-        
-        if (!jugadorActual.getId().equals(idJugador)) {
-            System.out.println("[SERVER] Intento de robo ilegal por: " + idJugador);
-            return;
-        }
+        if (!jugadorActual.getId().equals(idJugador)) return;
         
         robarCartaPara(jugadorActual);
         avanzarTurno(); 
@@ -169,7 +143,13 @@ public class Partida {
         indiceTurnoActual = (indiceTurnoActual + paso + jugadores.size()) % jugadores.size();
     }
 
-    // Getters y Setters
+    private Carta buscarCartaEnMano(Jugador jugador, String idCarta) {
+        for (Carta c : jugador.getMano()) {
+            if (c.getFotoId().equals(idCarta)) return c;
+        }
+        return null;
+    }
+
     public void agregarJugador(Jugador j) { jugadores.add(j); }
     public Jugador getJugadorActual() { return jugadores.get(indiceTurnoActual); }
     public Carta getCimaDescarte() { return descarte.peek(); }
