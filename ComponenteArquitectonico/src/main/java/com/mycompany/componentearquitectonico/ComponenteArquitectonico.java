@@ -3,8 +3,8 @@ package com.mycompany.componentearquitectonico;
 import Gestor.GestorJuego;
 import com.mycompany.gestorpartida.Interfaces.IPuertoAplicacion;
 import servidor.ServidorUNO;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ComponenteArquitectonico {
 
@@ -15,13 +15,13 @@ public class ComponenteArquitectonico {
         
         System.out.println("Preparando partida de prueba...");
         
-        // Creamos la lista de IDs de los jugadores esperados
-        List<String> jugadores = Arrays.asList("jugador-1", "jugador-2");
+        Map<String, String> jugadoresPrueba = new HashMap<>();
+        jugadoresPrueba.put("jugador-1", "😎");
+        jugadoresPrueba.put("jugador-2", "🤖");
         
-        // El gestor se encarga de instanciar la Partida y agregar los jugadores
-        gestor.registrarPartida("partida-1", jugadores);
+        gestor.registrarPartida("partida-1", jugadoresPrueba);
         
-        System.out.println("[OK] Partida 'partida-1' registrada y lista.");
+        System.out.println("[OK] Partida 'partida-1' registrada y lista con avatares.");
 
         ServidorUNO servidor = new ServidorUNO((IPuertoAplicacion) gestor);
         System.out.println("[OK] Servidor de red configurado.");

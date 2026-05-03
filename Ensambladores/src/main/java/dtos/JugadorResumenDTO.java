@@ -14,11 +14,13 @@ public class JugadorResumenDTO implements Serializable {
     private String id;
     private String nombre;
     private int cantidadCartas;
+    private String avatar;
 
-    public JugadorResumenDTO(String id, String nombre, int cantidadCartas) {
+    public JugadorResumenDTO(String id, String nombre, int cantidadCartas,String avatar) {
         this.id = id;
         this.nombre = nombre;
         this.cantidadCartas = cantidadCartas;
+        this.avatar = avatar;
         
         
     }
@@ -46,4 +48,14 @@ public class JugadorResumenDTO implements Serializable {
     public void setCantidadCartas(int cantidadCartas) {
         this.cantidadCartas = cantidadCartas;
     }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+    
+    
 }

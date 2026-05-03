@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class ClienteRed {
+
     private Socket socket;
     private ObjectOutputStream salida;
     private ObjectInputStream entrada;
@@ -16,9 +17,10 @@ public class ClienteRed {
         try {
             socket = new Socket("localhost", 5000);
             salida = new ObjectOutputStream(socket.getOutputStream());
-            salida.flush(); 
+            salida.flush();
             entrada = new ObjectInputStream(socket.getInputStream());
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 
     public EstadoPartidaDTO pedirEstadoActual() {
@@ -26,7 +28,9 @@ public class ClienteRed {
             salida.writeObject("OBTENER_ESTADO");
             salida.flush();
             return (EstadoPartidaDTO) entrada.readObject();
-        } catch (Exception e) { return null; }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public EstadoPartidaDTO pedirRobarCarta() {
@@ -34,7 +38,9 @@ public class ClienteRed {
             salida.writeObject("ROBAR_CARTA");
             salida.flush();
             return (EstadoPartidaDTO) entrada.readObject();
-        } catch (Exception e) { return null; }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public EstadoPartidaDTO pedirJugarCarta(CartaDTO carta, Color color) {
@@ -44,6 +50,21 @@ public class ClienteRed {
             salida.writeObject(color != null ? color.toString() : null);
             salida.flush();
             return (EstadoPartidaDTO) entrada.readObject();
-        } catch (Exception e) { return null; }
+        } catch (Exception e) {
+            return null;
+        }
     }
+
+    public dtos.EstadoPartidaDTO pedirCantarUno() {
+        try {
+            salida.writeObject("CANTAR_UNO");
+
+            salida.flush();
+            return (dtos.EstadoPartidaDTO) entrada.readObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

@@ -16,21 +16,24 @@ import java.util.List;
 public class Jugador {
     private String id;
     private String nombre;
+    private String avatar; // NUEVO
     private List<Carta> mano;
-    private boolean gritoUno;
+    private boolean dijoUno;
 
-    public Jugador(String id, String nombre) {
+    public Jugador(String id, String nombre, String avatar) {
         this.id = id;
         this.nombre = nombre;
+        this.avatar = avatar;
         this.mano = new ArrayList<>();
-        this.gritoUno = false;
+        this.dijoUno = false;
     }
 
-    public void recibirCarta(Carta carta) { this.mano.add(carta); }
     public String getId() { return id; }
     public String getNombre() { return nombre; }
+    public String getAvatar() { return avatar; }
     public List<Carta> getMano() { return mano; }
-    public void setGritoUno(boolean b) { this.gritoUno = b; }
-    public boolean haGritadoUno() { return gritoUno; }
+    public void recibirCarta(Carta carta) { mano.add(carta); }
+    public boolean isDijoUno() { return dijoUno; }
+    public void setDijoUno(boolean dijoUno) { this.dijoUno = dijoUno; }
 }
 

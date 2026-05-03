@@ -4,25 +4,26 @@
  */
 package com.mycompany.gestorpartida.Interfaces;
 
+import dtos.EstadoLobbyDTO;
 import dtos.EstadoPartidaDTO;
-
-
+import java.util.List;
+import java.util.Map;
 
 /**
  *
  * @author Chino
  */
 public interface IPuertoAplicacion {
- // Para cuando el jugador tira una carta
-    EstadoPartidaDTO jugarCarta(String idPartida, String idJugador, int indiceCarta, String nuevoColor);
+
+    void registrarPartida(String idPartida, Map<String, String> jugadoresLobby);
     
-    // Para cuando el jugador pasa turno robando del mazo
+    EstadoPartidaDTO jugarCarta(String idPartida, String idJugador, int indice, String idCarta, String nuevoColorStr);
     EstadoPartidaDTO robarCarta(String idPartida, String idJugador);
-    
-    //  Para iniciar la partida
-    EstadoPartidaDTO iniciarPartida(String idPartida, String idJugadorSolicitante);
-    
+    EstadoPartidaDTO cantarUno(String idPartida, String idJugador);
     EstadoPartidaDTO obtenerEstadoPartida(String idPartida, String idJugador);
     
-    void abandonarPartida(String idPartida, String idJugador);
+    // Asegúrate de que este también tenga el parámetro avatar
+    EstadoLobbyDTO unirseLobby(String idSala, String nombreJugador, String avatar);
+    EstadoLobbyDTO obtenerEstadoLobby(String idSala);
+    void iniciarPartidaDesdeLobby(String idSala);
 }

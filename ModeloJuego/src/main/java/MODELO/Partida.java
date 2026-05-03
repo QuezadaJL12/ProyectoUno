@@ -53,6 +53,15 @@ public class Partida {
         this.colorActual = inicio.getColor();
     }
 
+    public void gritarUno(String idJugador) {
+        for (Jugador j : jugadores) {
+            if (j.getId().equals(idJugador)) {
+                j.setDijoUno(true);
+                break;
+            }
+        }
+    }
+
     public void realizarJugada(String idJugador, String idCarta, Color nuevoColor) {
         if (hayGanador()) return; 
 
@@ -78,6 +87,14 @@ public class Partida {
             this.ganador = jugadorActual;
             return; 
         }
+
+    
+        if (jugadorActual.getMano().size() == 1 && !jugadorActual.isDijoUno()) {
+            robarCartaPara(jugadorActual);
+            robarCartaPara(jugadorActual);
+        }
+
+        jugadorActual.setDijoUno(false);
         
         if (carta.getColor() == Color.ESPECIAL) {
             this.colorActual = (nuevoColor == null) ? Color.ROJO : nuevoColor;
@@ -148,6 +165,25 @@ public class Partida {
             if (c.getFotoId().equals(idCarta)) return c;
         }
         return null;
+    }
+    
+    public java.util.Map<String, Integer> calcularPuntosFinales() {
+        java.util.Map<String, Integer> puntos = new java.util.HashMap<>();
+        for (Jugador j : jugadores) {
+            int suma = 0;
+            for (Carta c : j.getMano()) {
+                String tipo = c.getTipo().name();
+                if (tipo.contains("CUATRO") || tipo.contains("COMODIN") || tipo.contains("COLOR")) {
+                    suma += 50;
+                } else if (tipo.equals("SALTO") || tipo.equals("REVERSA") || tipo.equals("TOMA_DOS")) {
+                    suma += 20;
+                } else {
+                    suma += 5; // Valor base para numéricas
+                }
+            }
+            puntos.put(j.getNombre(), suma);
+        }
+        return puntos;
     }
 
     public void agregarJugador(Jugador j) { jugadores.add(j); }

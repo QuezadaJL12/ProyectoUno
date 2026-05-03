@@ -3,6 +3,7 @@ package dtos;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class EstadoPartidaDTO implements Serializable {
     private List<CartaDTO> miMano;
@@ -14,6 +15,7 @@ public class EstadoPartidaDTO implements Serializable {
     private boolean hayGanador;
     private String idGanador;
     private List<JugadorResumenDTO> rivales;
+    private Map<String, Integer> puntuaciones; 
 
     public EstadoPartidaDTO() {
         this.miMano = new ArrayList<>();
@@ -47,4 +49,7 @@ public class EstadoPartidaDTO implements Serializable {
     
     public List<JugadorResumenDTO> getRivales() { return rivales; }
     public void setRivales(List<JugadorResumenDTO> rivales) { this.rivales = rivales; }
+
+    public Map<String, Integer> getPuntuaciones() { return puntuaciones; }
+    public void setPuntuaciones(Map<String, Integer> puntuaciones) { this.puntuaciones = puntuaciones; }
 }
