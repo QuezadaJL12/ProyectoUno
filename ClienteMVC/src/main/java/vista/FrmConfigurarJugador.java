@@ -1,86 +1,76 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package vista;
 
-import Controlador.ControladorPrincipal;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-/**
- *
- * @author Chino
- */
 public class FrmConfigurarJugador extends JFrame {
 
-    private JTextField txtUsername;
-    private JButton btnSiguiente;
+    public JLabel lblIcono;
+    public JButton btnIzq;
+    public JButton btnDer;
+    public JTextField txtUsername;
+    public JButton btnSiguiente;
 
     public FrmConfigurarJugador() {
-        setTitle("UNO - Configurar Jugador");
-        setSize(400, 350);
+        setTitle("UNO - Seleccionar Avatar");
+        setSize(400, 420); 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
         setResizable(false);
         getContentPane().setBackground(new Color(84, 22, 27));
 
         initComponents();
-        configurarEventos();
     }
 
     private void initComponents() {
         setLayout(null);
+        
+        JLabel lblTitulo = new JLabel("Seleccionar Avatar", SwingConstants.CENTER);
+        lblTitulo.setForeground(new Color(200, 150, 50));
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 22));
+        lblTitulo.setBounds(0, 20, 400, 30);
+        add(lblTitulo);
 
-        JLabel lblIcono = new JLabel("👤", SwingConstants.CENTER);
-        lblIcono.setFont(new Font("Arial", Font.PLAIN, 60));
-        lblIcono.setForeground(Color.WHITE);
-        lblIcono.setBounds(150, 30, 100, 80);
+        lblIcono = new JLabel("", SwingConstants.CENTER);
+        lblIcono.setBounds(135, 70, 130, 130); 
         add(lblIcono);
 
-        JLabel lblUsername = new JLabel("USERNAME");
+        btnIzq = new JButton("<");
+        btnIzq.setBackground(new Color(200, 150, 50));
+        btnIzq.setFont(new Font("Arial", Font.BOLD, 18));
+        btnIzq.setFocusPainted(false);
+        btnIzq.setBounds(75, 115, 50, 40);
+        add(btnIzq);
+
+        btnDer = new JButton(">");
+        btnDer.setBackground(new Color(200, 150, 50));
+        btnDer.setFont(new Font("Arial", Font.BOLD, 18));
+        btnDer.setFocusPainted(false);
+        btnDer.setBounds(275, 115, 50, 40);
+        add(btnDer);
+
+        JLabel lblUsername = new JLabel("USERNAME:");
         lblUsername.setForeground(Color.WHITE);
-        lblUsername.setBounds(100, 130, 200, 20);
+        lblUsername.setFont(new Font("Arial", Font.BOLD, 14));
+        lblUsername.setBounds(100, 220, 200, 20);
         add(lblUsername);
 
         txtUsername = new JTextField();
-        txtUsername.setBounds(100, 150, 200, 35);
+        txtUsername.setFont(new Font("Arial", Font.PLAIN, 16));
+        txtUsername.setHorizontalAlignment(JTextField.CENTER);
+        txtUsername.setBounds(100, 245, 200, 35);
         add(txtUsername);
 
         btnSiguiente = new JButton("Siguiente");
-        btnSiguiente.setBounds(100, 210, 200, 40);
+        btnSiguiente.setFont(new Font("Arial", Font.BOLD, 16));
         btnSiguiente.setBackground(new Color(228, 56, 64));
         btnSiguiente.setForeground(Color.WHITE);
+        btnSiguiente.setFocusPainted(false);
+        btnSiguiente.setBounds(100, 300, 200, 45);
         add(btnSiguiente);
-    }
-
-    private void configurarEventos() {
-        btnSiguiente.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String nombre = txtUsername.getText().trim();
-                if (nombre.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Ingrese un nombre de usuario", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                FrmLobby lobby = new FrmLobby();
-                lobby.setVisible(true);
-                
-                lobby.txtListaJugadores.setText(nombre + " \t\t(Tú) - Listo\nEsperando rivales...");
-                
-                
-                
-                dispose(); 
-            }
-        });
     }
 }

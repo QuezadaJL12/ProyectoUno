@@ -66,5 +66,43 @@ public class ClienteRed {
             return null;
         }
     }
+    public dtos.EstadoLobbyDTO unirseLobby(String idSala, String nombreJugador, String avatarJugador) {
+        try {
+            salida.writeObject("UNIRSE_LOBBY");
+            salida.writeObject(idSala);
+            salida.writeObject(nombreJugador);
+            salida.writeObject(avatarJugador); 
+            salida.flush();
+            
+            return (dtos.EstadoLobbyDTO) entrada.readObject();
+        } catch (Exception e) {
+            System.err.println("Error al unirse al lobby: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public dtos.EstadoLobbyDTO pedirEstadoLobby(String idSala) {
+        try {
+            salida.writeObject("ESTADO_LOBBY");
+            salida.writeObject(idSala);
+            salida.flush();
+            
+            return (dtos.EstadoLobbyDTO) entrada.readObject();
+        } catch (Exception e) {
+            System.err.println("Error al pedir estado del lobby: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public void pedirIniciarPartida(String idSala) {
+        try {
+            salida.writeObject("INICIAR_PARTIDA");
+            salida.writeObject(idSala);
+            salida.flush();
+            
+        } catch (Exception e) {
+            System.err.println("Error al pedir iniciar la partida: " + e.getMessage());
+        }
+    }
 
 }

@@ -18,17 +18,34 @@ import Ensambladores.EnsambladorPartida;
 public class GestorJuego implements IPuertoAplicacion {
     
     private Map<String, Partida> partidas = new HashMap<>();
-    // Cambiado a Map<String, Map<Nombre, Avatar>> para persistir la selección del usuario
     private Map<String, Map<String, String>> salasLobby = new HashMap<>();
     private List<String> logEventos = new ArrayList<>();
 
-    // --- MÉTODOS DEL LOBBY ---
     
     @Override
-    public EstadoLobbyDTO unirseLobby(String idSala, String nombreJugador, String avatar) {
+    public EstadoLobbyDTO unirseLobby(String idSala, String nombreJugador, String avatarDeseado) {
         salasLobby.putIfAbsent(idSala, new LinkedHashMap<>());
-        // Almacenamos el nombre del jugador vinculado a su avatar elegido
-        salasLobby.get(idSala).put(nombreJugador, avatar);
+        Map<String, String> jugadoresEnSala = salasLobby.get(idSala);
+
+        // 1. Arreglo maestro con todos los avatares disponibles
+        String[] todosLosAvatares = {
+            "/avatares/avatar1.png", "/avatares/avatar2.png", 
+            "/avatares/avatar3.png", "/avatares/avatar4.png", 
+            "/avatares/avatar5.png", "/avatares/avatar6.png"
+        };
+
+        String avatarFinal = avatarDeseado;
+
+        if (jugadoresEnSala.containsValue(avatarDeseado)) {
+            for (String avatarLibre : todosLosAvatares) {
+                if (!jugadoresEnSala.containsValue(avatarLibre)) {
+                    avatarFinal = avatarLibre;
+                    break;
+                }
+            }
+        }
+
+        jugadoresEnSala.put(nombreJugador, avatarFinal);
         
         return obtenerEstadoLobby(idSala);
     }
@@ -54,15 +71,17 @@ public class GestorJuego implements IPuertoAplicacion {
         }
     }
 
-    // --- MÉTODOS DE LA PARTIDA ---
+
 
     @Override
     public void registrarPartida(String idPartida, Map<String, String> jugadoresLobby) {
         Partida nuevaPartida = new Partida(idPartida);
+        
         // Creamos cada objeto Jugador con su ID, nombre y el avatar recuperado del lobby
         for (Map.Entry<String, String> entry : jugadoresLobby.entrySet()) {
             nuevaPartida.agregarJugador(new Jugador(entry.getKey(), entry.getKey(), entry.getValue()));
         }
+        
         nuevaPartida.iniciarJuego();
         partidas.put(idPartida, nuevaPartida);
         logEventos.add("Partida " + idPartida + " iniciada.");

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package vista;
 
 import java.awt.Color;
@@ -9,64 +5,69 @@ import java.awt.Font;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 
-/**
- *
- * @author Chino
- */
 public class FrmLobby extends JFrame {
 
-    public JButton btnIniciar;
+    public JLabel lblEstatus;
+    public JLabel lblJugadoresConectados;
     public JTextArea txtListaJugadores;
-    public JLabel lblEstado;
+    public JButton btnIniciar;
 
     public FrmLobby() {
-        setTitle("UNO - Lobby");
-        setSize(400, 450);
+        setTitle("UNO - Lobby de Espera");
+        setSize(450, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
         setResizable(false);
-        getContentPane().setBackground(new Color(84, 22, 27));
+        // Fondo rojo clásico
+        getContentPane().setBackground(new Color(178, 34, 34));
+
         initComponents();
     }
 
     private void initComponents() {
         setLayout(null);
 
-        JLabel lblLogo = new JLabel("UNO!", SwingConstants.CENTER);
-        lblLogo.setFont(new Font("Arial", Font.BOLD, 40));
-        lblLogo.setForeground(Color.WHITE);
-        lblLogo.setBounds(100, 20, 200, 50);
-        add(lblLogo);
-
-        JLabel lblTitulo = new JLabel("Jugadores:");
-        lblTitulo.setFont(new Font("Arial", Font.BOLD, 16));
+        JLabel lblTitulo = new JLabel("Sala de Espera", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 30));
         lblTitulo.setForeground(Color.WHITE);
-        lblTitulo.setBounds(50, 90, 200, 20);
+        lblTitulo.setBounds(0, 20, 450, 40);
         add(lblTitulo);
 
-       
+        lblJugadoresConectados = new JLabel("Conectados: 0", SwingConstants.CENTER);
+        lblJugadoresConectados.setFont(new Font("Arial", Font.BOLD, 16));
+        lblJugadoresConectados.setForeground(new Color(255, 215, 0)); // Dorado
+        lblJugadoresConectados.setBounds(0, 65, 450, 25);
+        add(lblJugadoresConectados);
+
         txtListaJugadores = new JTextArea();
-        txtListaJugadores.setBounds(50, 120, 300, 150);
-        txtListaJugadores.setBackground(new Color(50, 10, 15)); 
-        txtListaJugadores.setForeground(new Color(255, 204, 0)); 
-        txtListaJugadores.setFont(new Font("Monospaced", Font.BOLD, 14));
         txtListaJugadores.setEditable(false);
-        add(txtListaJugadores);
+        txtListaJugadores.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20)); // Soporte para Emojis
+        txtListaJugadores.setBackground(new Color(84, 22, 27)); // Rojo oscuro
+        txtListaJugadores.setForeground(Color.WHITE);
+        
+        JScrollPane scrollPane = new JScrollPane(txtListaJugadores);
+        scrollPane.setBounds(50, 100, 335, 230);
+        scrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new Color(255, 215, 0), 2));
+        add(scrollPane);
 
-        lblEstado = new JLabel("Esperando al Host...", SwingConstants.CENTER);
-        lblEstado.setForeground(Color.LIGHT_GRAY);
-        lblEstado.setBounds(100, 290, 200, 20);
-        add(lblEstado);
+        lblEstatus = new JLabel("Conectando al servidor...", SwingConstants.CENTER);
+        lblEstatus.setFont(new Font("Arial", Font.ITALIC, 14));
+        lblEstatus.setForeground(Color.LIGHT_GRAY);
+        lblEstatus.setBounds(0, 345, 450, 20);
+        add(lblEstatus);
 
-        btnIniciar = new JButton("Iniciar");
-        btnIniciar.setBounds(125, 330, 150, 40);
-        btnIniciar.setBackground(new Color(0, 200, 0)); 
-        btnIniciar.setForeground(Color.WHITE);
-        btnIniciar.setFont(new Font("Arial", Font.BOLD, 16));
-        btnIniciar.setEnabled(false); 
+        btnIniciar = new JButton("INICIAR PARTIDA");
+        btnIniciar.setFont(new Font("Arial", Font.BOLD, 18));
+        btnIniciar.setBackground(new Color(255, 215, 0)); // Dorado
+        btnIniciar.setForeground(Color.BLACK);
+        btnIniciar.setFocusPainted(false);
+        btnIniciar.setBounds(100, 380, 235, 50);
+        
+        btnIniciar.setVisible(false); 
+        
         add(btnIniciar);
     }
 }
