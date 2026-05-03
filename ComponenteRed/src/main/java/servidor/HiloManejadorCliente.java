@@ -38,49 +38,39 @@ public class HiloManejadorCliente implements Runnable {
                         case "OBTENER_ESTADO":
                             enviarRespuesta(gestor.obtenerEstadoPartida("partida-1", idJugador));
                             break;
-
                         case "ROBAR_CARTA":
                             enviarRespuesta(gestor.robarCarta("partida-1", idJugador));
                             break;
-
                         case "JUGAR_CARTA":
                             CartaDTO cartaAJugar = (CartaDTO) entrada.readObject();
                             String colorElegidoStr = (String) entrada.readObject();
-                            
                             EstadoPartidaDTO nuevoEstado = gestor.jugarCarta("partida-1", idJugador, 0, cartaAJugar.getFotoId(), colorElegidoStr);
                             if (nuevoEstado == null) {
                                 nuevoEstado = gestor.obtenerEstadoPartida("partida-1", idJugador);
                             }
                             enviarRespuesta(nuevoEstado);
                             break;
-
                         case "CANTAR_UNO":
                             enviarRespuesta(gestor.cantarUno("partida-1", idJugador));
                             break;
-
                         case "UNIRSE_LOBBY":
                             String idSalaLobby = (String) entrada.readObject();
                             String nombre = (String) entrada.readObject();
                             String avatar = (String) entrada.readObject(); 
                             enviarRespuesta(gestor.unirseLobby(idSalaLobby, nombre, avatar));
                             break;
-
                         case "ESTADO_LOBBY":
                             String idSalaEstado = (String) entrada.readObject();
                             enviarRespuesta(gestor.obtenerEstadoLobby(idSalaEstado));
                             break;
-
                         case "INICIAR_PARTIDA":
                             String idSalaInicio = (String) entrada.readObject();
                             gestor.iniciarPartidaDesdeLobby(idSalaInicio);
                             break;
-                            
                         default:
-                            System.out.println("Petición desconocida: " + peticion);
                             break;
                     }
                 } catch (Exception e) {
-                    System.err.println("Error procesando petición de " + idJugador + ": " + e.getMessage());
                     try {
                         enviarRespuesta(gestor.obtenerEstadoPartida("partida-1", idJugador));
                     } catch (Exception ex) {
@@ -89,12 +79,10 @@ public class HiloManejadorCliente implements Runnable {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Conexión finalizada con " + idJugador + ": " + e.getMessage());
         } finally {
             cerrarConexion();
         }
     }
-
 
     private void enviarRespuesta(Object respuesta) throws Exception {
         if (respuesta != null) {
@@ -110,7 +98,6 @@ public class HiloManejadorCliente implements Runnable {
             if (salida != null) salida.close();
             if (socket != null && !socket.isClosed()) socket.close();
         } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }

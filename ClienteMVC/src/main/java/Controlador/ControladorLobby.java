@@ -1,111 +1,84 @@
 package Controlador;
 
-import Cliente.ClienteRed;
-import dtos.EstadoLobbyDTO;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Map;
-import javax.swing.Timer;
+import java.awt.Image;
+import java.net.URL;
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import red.ClienteHilo;
+import vista.FrmConfigurarJugador;
 import vista.FrmLobby;
-import vista.FrmTablero;
 
 public class ControladorLobby {
-
-    private FrmLobby vista;
-    private ClienteRed red;
-    private Timer timerActualizador;
     
+    private FrmLobby vista;
     private String nombreJugador;
-    private String avatarJugador;
-    private String idSala;
+    private String rutaAvatar;
+    private String partidaId;
     private boolean esHost;
+    private ClienteHilo conexion;
 
-    public ControladorLobby(FrmLobby vista, String nombreJugador, String avatarJugador, String idSala, boolean esHost) {
+    public ControladorLobby(FrmLobby vista, String nombreJugador, String rutaAvatar, String partidaId, boolean esHost) {
         this.vista = vista;
         this.nombreJugador = nombreJugador;
-        this.avatarJugador = avatarJugador;
-        this.idSala = idSala;
+        this.rutaAvatar = rutaAvatar;
+        this.partidaId = partidaId;
         this.esHost = esHost;
-        
-        this.red = new ClienteRed();
-        this.red.conectar();
-        
         configurarEventos();
     }
 
     public void iniciar() {
         vista.setLocationRelativeTo(null);
-        vista.setTitle("Lobby - Sala: " + idSala);
+        vista.lblMiNombre.setText(nombreJugador);
+        vista.lblTitulo.setText("Sala: " + partidaId);
         
-        vista.btnIniciar.setEnabled(false);
-        vista.btnIniciar.setVisible(esHost); 
-        if (!esHost) {
-            vista.lblEstatus.setText("Esperando a que el host inicie...");
-        }
+        cargarMiAvatar();
 
+        vista.btnIniciar.setEnabled(esHost);
+        if (!esHost) vista.btnIniciar.setToolTipText("Solo el Host puede iniciar la partida");
+        
         vista.setVisible(true);
-        ingresarAlLobby();
-        iniciarTimer();
+        conectarAlServidor();
     }
 
-    private void ingresarAlLobby() {
-        EstadoLobbyDTO estadoInicial = red.unirseLobby(idSala, nombreJugador, avatarJugador);
-        actualizarPantalla(estadoInicial);
+    private void conectarAlServidor() {
+        conexion = new ClienteHilo("127.0.0.1", 5000, this);
+        new Thread(conexion).start();
+        conexion.unirseLobby(partidaId, nombreJugador, rutaAvatar);
     }
 
-    private void iniciarTimer() {
-        timerActualizador = new Timer(1500, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                EstadoLobbyDTO estado = red.pedirEstadoLobby(idSala);
-                actualizarPantalla(estado);
-            }
+    public void agregarTextoLobby(String texto) {
+        SwingUtilities.invokeLater(() -> {
+            vista.txtJugadores.append(texto);
+            vista.txtJugadores.setCaretPosition(vista.txtJugadores.getDocument().getLength());
         });
-        timerActualizador.start();
+    }
+
+    private void cargarMiAvatar() {
+        try {
+            String recurso = rutaAvatar.startsWith("/") ? rutaAvatar.substring(1) : rutaAvatar;
+            URL url = Thread.currentThread().getContextClassLoader().getResource(recurso);
+            
+            if (url != null) {
+                Image img = new ImageIcon(url).getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                vista.lblMiAvatar.setIcon(new ImageIcon(img));
+            } else {
+                vista.lblMiAvatar.setText("Sin Imagen");
+            }
+        } catch (Exception e) {
+        }
     }
 
     private void configurarEventos() {
-        vista.btnIniciar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                red.pedirIniciarPartida(idSala);
-                vista.btnIniciar.setEnabled(false);
-                vista.lblEstatus.setText("Iniciando...");
+        vista.btnSalir.addActionListener(e -> {
+            if (JOptionPane.showConfirmDialog(vista, "Salir?", "Lobby", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                new ControladorConfiguracion(new FrmConfigurarJugador()).iniciar();
+                vista.dispose();
             }
         });
-    }
 
-    private void actualizarPantalla(EstadoLobbyDTO estado) {
-        if (estado == null) return;
-
-        StringBuilder sb = new StringBuilder();
-        
-      
-        for (Map.Entry<String, String> entry : estado.getJugadores().entrySet()) {
-            sb.append(entry.getValue()).append(" ").append(entry.getKey());
-            if (entry.getKey().equals(nombreJugador)) {
-                sb.append(" (Tú)");
-            }
-            sb.append(" - Listo\n");
-        }
-        
-        vista.txtListaJugadores.setText(sb.toString());
-        vista.lblJugadoresConectados.setText("Conectados: " + estado.getJugadores().size());
-
-        if (esHost && !estado.isJuegoIniciado()) {
-            vista.btnIniciar.setEnabled(estado.isPuedeIniciar());
-            vista.lblEstatus.setText(estado.isPuedeIniciar() ? "¡Listos para jugar!" : "Esperando más jugadores...");
-        }
-
-       
-        if (estado.isJuegoIniciado()) {
-            timerActualizador.stop(); 
-            
-            FrmTablero tablero = new FrmTablero();
-            ControladorPrincipal controladorJuego = new ControladorPrincipal(tablero, nombreJugador);
-            controladorJuego.iniciar();
-            
-            vista.dispose();
-        }
+        vista.btnIniciar.addActionListener(e -> {
+            if (esHost) conexion.iniciarPartida(partidaId);
+        });
     }
 }
