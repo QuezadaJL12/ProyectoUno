@@ -4,17 +4,13 @@ import com.mycompany.gestorpartida.Interfaces.IPuertoAplicacion;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- *
- * @author Chino
- */
 public class ServidorUNO {
     private final int PUERTO = 5000;
     private IPuertoAplicacion gestorPartidas;
-    
-    // Contador para asignar IDs únicos a los jugadores que se conectan
-    private int contadorJugadores = 1;
+    public static List<HiloManejadorCliente> clientes = new CopyOnWriteArrayList<>();
 
     public ServidorUNO(IPuertoAplicacion gestorPartidas) {
         this.gestorPartidas = gestorPartidas;
@@ -27,21 +23,12 @@ public class ServidorUNO {
 
             while (true) {
                 Socket socketCliente = serverSocket.accept();
-                
-                // Generamos un ID dinámico basado en el orden de conexión
-                String idAsignado = "jugador-" + contadorJugadores;
-                
-                System.out.println("¡Nuevo jugador conectado! Asignado como: " + idAsignado + 
-                                   " desde " + socketCliente.getInetAddress());
+                System.out.println("¡Nueva conexión desde " + socketCliente.getInetAddress() + "!");
 
-                // Pasamos el ID asignado al constructor del manejador
-                HiloManejadorCliente manejador = new HiloManejadorCliente(socketCliente, gestorPartidas, idAsignado);
+                HiloManejadorCliente manejador = new HiloManejadorCliente(socketCliente, gestorPartidas);
+                clientes.add(manejador);
                 new Thread(manejador).start();
-                
-                // Incrementamos para el siguiente jugador que entre
-                contadorJugadores++;
             }
-
         } catch (IOException e) {
             System.err.println("Error al iniciar el servidor: " + e.getMessage());
         }

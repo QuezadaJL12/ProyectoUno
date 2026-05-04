@@ -2,7 +2,6 @@ Cartas\TipoCarta.class
 MODELO\Jugador.class
 servicios\ValidadorReglas.class
 Cartas\Carta.class
-Cartas\CartaAccion$1.class
 Cartas\CartaComodin.class
 Cartas\CartaNumero.class
 Cartas\Color.class

@@ -11,18 +11,28 @@ import java.io.Serializable;
  * @author Chino
  */
 public class CartaDTO implements Serializable {
+   private String id;
     private String color;
-    private String valorOTipo;
-    private String fotoId; 
+    private String tipo;
+    private String fotoId;
 
-    public CartaDTO(String color, String valorOTipo, String fotoId) {
+    public CartaDTO(String id, String color, String tipo, String fotoId) {
+       this.id = id;
         this.color = color;
-        this.valorOTipo = valorOTipo;
+        this.tipo = tipo;
         this.fotoId = fotoId;
         
         
     
 }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getColor() {
         return color;
@@ -32,12 +42,12 @@ public class CartaDTO implements Serializable {
         this.color = color;
     }
 
-    public String getValorOTipo() {
-        return valorOTipo;
+    public String getTipo() {
+        return tipo;
     }
 
-    public void setValorOTipo(String valorOTipo) {
-        this.valorOTipo = valorOTipo;
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
     public String getFotoId() {
@@ -47,4 +57,5 @@ public class CartaDTO implements Serializable {
     public void setFotoId(String fotoId) {
         this.fotoId = fotoId;
     }
+
 }

@@ -14,19 +14,19 @@ public abstract class Carta {
     private final String id;
     private final Color color; 
     private final TipoCarta tipo;
+    private final String fotoId; 
 
-    public Carta(String id, Color color, TipoCarta tipo) {
+    public Carta(String id, Color color, TipoCarta tipo, String fotoId) {
         this.id = id;
         this.color = color;
         this.tipo = tipo;
+        this.fotoId = fotoId;
     }
 
-    // Getters
     public Color getColor() { return color; }
     public TipoCarta getTipo() { return tipo; }
     public String getId() { return id; }
-    public abstract String getFotoId();
+    public String getFotoId() { return fotoId; } // Ahora es un getter normal
 
-   
     public abstract boolean esJugable(Carta cimaPila, Color colorActivo);
 }

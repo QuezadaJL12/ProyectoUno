@@ -2,11 +2,11 @@ package MODELO;
 
 import Cartas.Carta;
 import Cartas.Color;
+import Cartas.TipoCarta; 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
-import servicios.ValidadorReglas;
 
 public class Partida {
     private String id;
@@ -17,68 +17,51 @@ public class Partida {
     private boolean sentidoHorario;
     private int indiceTurnoActual;
     private Jugador ganador = null;
-    private ValidadorReglas validador;
+    private int acumuladoCartas = 0;
 
-    public Partida(String id) {
-        this.id = id;
+    public Partida() {
+        this.id = java.util.UUID.randomUUID().toString();
         this.jugadores = new ArrayList<>();
         this.mazo = new FabricaMazo().crearMazoOficial();
         this.descarte = new Stack<>();
         this.sentidoHorario = true;
         this.indiceTurnoActual = 0;
-        this.validador = new ValidadorReglas();
     }
 
-    public void iniciarJuego() {
+    public void iniciarPartida() {
         if (jugadores.size() < 2) return; 
-        
         Collections.shuffle(mazo);
-        
         for (Jugador j : jugadores) {
             j.getMano().clear(); 
             for (int i = 0; i < 7; i++) {
                 if (!mazo.isEmpty()) j.recibirCarta(mazo.pop());
             }
         }
-
         if (mazo.isEmpty()) rellenarMazo();
         Carta inicio = mazo.pop();
-        
         while (inicio.getColor() == Color.ESPECIAL) {
             mazo.insertElementAt(inicio, 0);
             inicio = mazo.pop();
         }
-        
         descarte.push(inicio);
         this.colorActual = inicio.getColor();
     }
 
-    public void gritarUno(String idJugador) {
-        for (Jugador j : jugadores) {
-            if (j.getId().equals(idJugador)) {
-                j.setDijoUno(true);
-                break;
-            }
-        }
-    }
-
-    public void realizarJugada(String idJugador, String idCarta, Color nuevoColor) {
+    public void realizarJugada(String idJugador, Carta carta, Color nuevoColor) {
         if (hayGanador()) return; 
 
         Jugador jugadorActual = jugadores.get(indiceTurnoActual);
-        
-        if (!jugadorActual.getId().equals(idJugador)) {
-            return; 
-        }
+        if (!jugadorActual.getId().equals(idJugador)) return;
 
-        Carta carta = buscarCartaEnMano(jugadorActual, idCarta);
-        if (carta == null) return;
+        if (acumuladoCartas > 0) {
+            if (carta.getTipo() != TipoCarta.TOMA_DOS && carta.getTipo() != TipoCarta.TOMA_CUATRO) {
+                return; 
+            }
+        }
 
         Carta cima = descarte.peek();
-
-        if (!validador.esMovimientoValido(carta, cima, colorActual)) {
-            return;
-        }
+        
+        if (!carta.esJugable(cima, colorActual)) return;
 
         jugadorActual.getMano().remove(carta);
         descarte.push(carta);
@@ -88,14 +71,19 @@ public class Partida {
             return; 
         }
 
-    
         if (jugadorActual.getMano().size() == 1 && !jugadorActual.isDijoUno()) {
             robarCartaPara(jugadorActual);
             robarCartaPara(jugadorActual);
         }
 
         jugadorActual.setDijoUno(false);
-        
+
+        if (carta.getTipo() == TipoCarta.TOMA_DOS) {
+            acumuladoCartas += 2;
+        } else if (carta.getTipo() == TipoCarta.TOMA_CUATRO) {
+            acumuladoCartas += 4;
+        }
+
         if (carta.getColor() == Color.ESPECIAL) {
             this.colorActual = (nuevoColor == null) ? Color.ROJO : nuevoColor;
         } else {
@@ -105,30 +93,12 @@ public class Partida {
         procesarEfecto(carta);
     }
 
-    private void procesarEfecto(Carta carta) {
-        switch (carta.getTipo()) {
-            case SALTO -> {
-                avanzarTurno(); 
-                avanzarTurno();
+    public void verificarUno(String idJugador) {
+        for (Jugador j : jugadores) {
+            if (j.getId().equals(idJugador)) {
+                j.setDijoUno(true);
+                break;
             }
-            case REVERSA -> {
-                this.sentidoHorario = !sentidoHorario;
-                if (jugadores.size() == 2) {
-                    avanzarTurno();
-                }
-                avanzarTurno();
-            }
-            case TOMA_DOS -> {
-                avanzarTurno();
-                for(int i=0; i<2; i++) robarCartaPara(getJugadorActual());
-                avanzarTurno(); 
-            }
-            case TOMA_CUATRO -> {
-                avanzarTurno(); 
-                for(int i=0; i<4; i++) robarCartaPara(getJugadorActual());
-                avanzarTurno(); 
-            }
-            default -> avanzarTurno(); 
         }
     }
 
@@ -137,8 +107,29 @@ public class Partida {
         Jugador jugadorActual = jugadores.get(indiceTurnoActual);
         if (!jugadorActual.getId().equals(idJugador)) return;
         
-        robarCartaPara(jugadorActual);
-        avanzarTurno(); 
+        if (acumuladoCartas > 0) {
+            for (int i = 0; i < acumuladoCartas; i++) robarCartaPara(jugadorActual);
+            acumuladoCartas = 0;
+            avanzarTurno();
+        } else {
+            
+            robarCartaPara(jugadorActual);
+        }
+    }
+
+    private void procesarEfecto(Carta carta) {
+        switch (carta.getTipo()) {
+            case SALTO -> {
+                avanzarTurno();
+                avanzarTurno();
+            }
+            case REVERSA -> {
+                this.sentidoHorario = !sentidoHorario;
+                if (jugadores.size() == 2) avanzarTurno();
+                avanzarTurno();
+            }
+            default -> avanzarTurno(); 
+        }
     }
 
     private void robarCartaPara(Jugador j) {
@@ -160,38 +151,27 @@ public class Partida {
         indiceTurnoActual = (indiceTurnoActual + paso + jugadores.size()) % jugadores.size();
     }
 
-    private Carta buscarCartaEnMano(Jugador jugador, String idCarta) {
-        for (Carta c : jugador.getMano()) {
-            if (c.getFotoId().equals(idCarta)) return c;
-        }
-        return null;
-    }
-    
-    public java.util.Map<String, Integer> calcularPuntosFinales() {
-        java.util.Map<String, Integer> puntos = new java.util.HashMap<>();
-        for (Jugador j : jugadores) {
-            int suma = 0;
-            for (Carta c : j.getMano()) {
-                String tipo = c.getTipo().name();
-                if (tipo.contains("CUATRO") || tipo.contains("COMODIN") || tipo.contains("COLOR")) {
-                    suma += 50;
-                } else if (tipo.equals("SALTO") || tipo.equals("REVERSA") || tipo.equals("TOMA_DOS")) {
-                    suma += 20;
-                } else {
-                    suma += 5; // Valor base para numéricas
-                }
-            }
-            puntos.put(j.getNombre(), suma);
-        }
-        return puntos;
-    }
-
     public void agregarJugador(Jugador j) { jugadores.add(j); }
     public Jugador getJugadorActual() { return jugadores.get(indiceTurnoActual); }
     public Carta getCimaDescarte() { return descarte.peek(); }
     public Color getColorActual() { return colorActual; }
     public List<Jugador> getJugadores() { return jugadores; }
-    public String getId() { return id; }
     public boolean hayGanador() { return ganador != null; }
     public Jugador getGanador() { return ganador; }
+    public int getAcumuladoCartas() { return acumuladoCartas; }
+
+    public java.util.Map<String, Integer> calcularPuntosFinales() {
+        java.util.Map<String, Integer> puntos = new java.util.HashMap<>();
+        for (Jugador j : jugadores) {
+            int suma = 0;
+            for (Carta c : j.getMano()) {
+                TipoCarta t = c.getTipo();
+                if (t == TipoCarta.TOMA_CUATRO || t == TipoCarta.CAMBIO_COLOR) suma += 50;
+                else if (t == TipoCarta.SALTO || t == TipoCarta.REVERSA || t == TipoCarta.TOMA_DOS) suma += 20;
+                else suma += 5;
+            }
+            puntos.put(j.getNombre(), suma);
+        }
+        return puntos;
+    }
 }

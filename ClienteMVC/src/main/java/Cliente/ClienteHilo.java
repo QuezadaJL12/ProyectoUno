@@ -1,70 +1,140 @@
-package red;
+package Cliente;
 
-import Controlador.ControladorLobby;
+import dtos.CartaDTO;
+import dtos.EstadoLobbyDTO;
+import dtos.EstadoPartidaDTO;
+import interfaces.ObservadorRed;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class ClienteHilo implements Runnable {
-
+public class ClienteHilo extends Thread {
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
     private Socket socket;
-    private ObjectOutputStream salida;
-    private ObjectInputStream entrada;
-    private ControladorLobby controladorLobby;
+    
+    private String idJugador;
+    private String idPartida;
+    private String host;
+    private int puerto;
+    
+    private List<ObservadorRed> observadores = new ArrayList<>();
+    private boolean conectado = false;
 
-    public ClienteHilo(String ip, int puerto, ControladorLobby controladorLobby) {
-        this.controladorLobby = controladorLobby;
-        try {
-            socket = new Socket(ip, puerto);
-            salida = new ObjectOutputStream(socket.getOutputStream());
-            salida.flush(); 
-            entrada = new ObjectInputStream(socket.getInputStream());
-            System.out.println("Conectado al servidor en " + ip + ":" + puerto);
-        } catch (Exception e) {
-            System.err.println("Error al conectar: " + e.getMessage());
-        }
+    public ClienteHilo(String host, int puerto) {
+        this.host = host;
+        this.puerto = puerto;
     }
 
-    public void unirseLobby(String idSala, String nombre, String avatar) {
+    public void agregarObservador(ObservadorRed obs) {
+        this.observadores.add(obs);
+    }
+
+
+    public void unirseLobby(String idSala, String nombreJugador, String rutaAvatar) {
+        this.idPartida = idSala;
+        this.idJugador = nombreJugador;
         try {
-            if (salida != null) {
-                salida.writeObject("UNIRSE_LOBBY");
-                salida.writeObject(idSala);
-                salida.writeObject(nombre);
-                salida.writeObject(avatar);
-                salida.flush();
-            }
-        } catch (Exception e) {
-            System.err.println("Error enviando datos: " + e.getMessage());
+            if (out == null) conectar();
+            Map<String, Object> peticion = new HashMap<>();
+            peticion.put("accion", "UNIRSE_LOBBY");
+            peticion.put("idSala", idSala);
+            peticion.put("nombre", nombreJugador);
+            peticion.put("avatar", rutaAvatar);
+            out.writeObject(peticion);
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     public void iniciarPartida(String idSala) {
         try {
-            if (salida != null) {
-                salida.writeObject("INICIAR_PARTIDA");
-                salida.writeObject(idSala);
-                salida.flush();
-            }
+            Map<String, Object> peticion = new HashMap<>();
+            peticion.put("accion", "INICIAR_PARTIDA");
+            peticion.put("idSala", idSala);
+            out.writeObject(peticion);
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void jugarCarta(CartaDTO carta, String nuevoColor) {
+        try {
+            Map<String, Object> peticion = new HashMap<>();
+            peticion.put("accion", "JUGAR_CARTA");
+            peticion.put("idPartida", this.idPartida);
+            peticion.put("idJugador", this.idJugador);
+            peticion.put("idCarta", carta.getFotoId());
+            peticion.put("nuevoColor", nuevoColor);
+            out.writeObject(peticion);
+            out.flush();
         } catch (Exception e) {
-            System.err.println("Error al iniciar: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void robarCarta() {
+        enviarPeticionSimple("ROBAR_CARTA");
+    }
+
+    public void cantarUno() {
+        enviarPeticionSimple("CANTAR_UNO");
+    }
+
+    public void pedirEstadoPartida() {
+        enviarPeticionSimple("OBTENER_ESTADO");
+    }
+
+    private void enviarPeticionSimple(String accion) {
+        try {
+            Map<String, Object> peticion = new HashMap<>();
+            peticion.put("accion", accion);
+            peticion.put("idPartida", this.idPartida);
+            peticion.put("idJugador", this.idJugador);
+            out.writeObject(peticion);
+            out.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void conectar() throws IOException {
+        if (!conectado) {
+            this.socket = new Socket(host, puerto);
+            this.out = new ObjectOutputStream(socket.getOutputStream());
+            this.in = new ObjectInputStream(socket.getInputStream());
+            this.conectado = true;
         }
     }
 
     @Override
     public void run() {
         try {
-            while (socket != null && !socket.isClosed()) {
-                if (entrada != null) {
-                    Object respuesta = entrada.readObject();
-                    if (respuesta != null) {
-                        controladorLobby.agregarTextoLobby("Se recibio: " + respuesta.getClass().getSimpleName() + "\n");
+            conectar();
+            while (conectado) {
+                Object respuesta = in.readObject();
+                
+                if (respuesta instanceof EstadoLobbyDTO) {
+                    for (ObservadorRed obs : observadores) {
+                        obs.enActualizacionLobby((EstadoLobbyDTO) respuesta);
+                    }
+                } else if (respuesta instanceof EstadoPartidaDTO) {
+                    for (ObservadorRed obs : observadores) {
+                        obs.enActualizacionPartida((EstadoPartidaDTO) respuesta);
                     }
                 }
             }
         } catch (Exception e) {
-            System.err.println("Desconectado del servidor. Motivo: " + e.getMessage());
-            e.printStackTrace(); // Esto nos dira exactamente donde fallo
+            System.err.println("Conexión perdida con el servidor.");
+            conectado = false;
         }
     }
 }
