@@ -26,7 +26,7 @@ public abstract class Carta {
     public Color getColor() { return color; }
     public TipoCarta getTipo() { return tipo; }
     public String getId() { return id; }
-    public String getFotoId() { return fotoId; } // Ahora es un getter normal
+    public String getFotoId() { return fotoId; } 
 
     public abstract boolean esJugable(Carta cimaPila, Color colorActivo);
 }
