@@ -16,7 +16,7 @@ import java.util.List;
 public class Jugador {
     private String id;
     private String nombre;
-    private String avatar; // NUEVO
+    private String avatar; 
     private List<Carta> mano;
     private boolean dijoUno;
 
