@@ -80,8 +80,14 @@ public class Partida {
 
         if (carta.getTipo() == TipoCarta.TOMA_DOS) {
             acumuladoCartas += 2;
+            this.colorActual = carta.getColor();
         } else if (carta.getTipo() == TipoCarta.TOMA_CUATRO) {
             acumuladoCartas += 4;
+            if (nuevoColor != null && nuevoColor != Color.ESPECIAL) {
+                this.colorActual = nuevoColor;
+            } else {
+                this.colorActual = Color.ROJO; 
+            }
         }
 
         if (carta.getColor() == Color.ESPECIAL) {
@@ -159,6 +165,7 @@ public class Partida {
     public boolean hayGanador() { return ganador != null; }
     public Jugador getGanador() { return ganador; }
     public int getAcumuladoCartas() { return acumuladoCartas; }
+    
 
     public java.util.Map<String, Integer> calcularPuntosFinales() {
         java.util.Map<String, Integer> puntos = new java.util.HashMap<>();
