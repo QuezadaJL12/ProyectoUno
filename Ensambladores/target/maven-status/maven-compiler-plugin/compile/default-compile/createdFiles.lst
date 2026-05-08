@@ -1,6 +1,7 @@
 Ensambladores\EnsambladorPartida.class
 dtos\JugadorResumenDTO.class
 dtos\CartaDTO.class
+dtos\RespuestaLobbyDTO.class
 mappers\PartidaMapper.class
 dtos\EstadoJuegoDTO.class
 dtos\EstadoLobbyDTO.class

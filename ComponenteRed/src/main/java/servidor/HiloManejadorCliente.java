@@ -50,6 +50,7 @@ public class HiloManejadorCliente implements Runnable {
     public void run() {
         try {
             salida = new ObjectOutputStream(socket.getOutputStream());
+            salida.flush();
             entrada = new ObjectInputStream(socket.getInputStream());
 
             while (!socket.isClosed()) {

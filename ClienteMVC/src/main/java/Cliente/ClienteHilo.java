@@ -3,6 +3,7 @@ package Cliente;
 import dtos.CartaDTO;
 import dtos.EstadoLobbyDTO;
 import dtos.EstadoPartidaDTO;
+import dtos.RespuestaLobbyDTO;
 import interfaces.ObservadorRed;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -105,16 +106,28 @@ public class ClienteHilo extends Thread {
         }
     }
 
-
     private void conectar() throws IOException {
         if (!conectado) {
-            this.socket = new Socket(host, puerto);
-            this.out = new ObjectOutputStream(socket.getOutputStream());
-            this.in = new ObjectInputStream(socket.getInputStream());
-            this.conectado = true;
+            try {
+                this.socket = new Socket(host, puerto);
+                this.out = new ObjectOutputStream(socket.getOutputStream());
+                this.in = new ObjectInputStream(socket.getInputStream());
+                this.conectado = true;
+            } catch (IOException e) {
+                
+                for (ObservadorRed obs : observadores) {
+                    RespuestaLobbyDTO res = new RespuestaLobbyDTO("No se pudo conectar con el servidor");
+                    obs.onError(res);
+                }
+                
+                conectado = false;
+                
+                throw e; 
+                
+            }
         }
     }
-
+    
     @Override
     public void run() {
         try {
@@ -133,7 +146,10 @@ public class ClienteHilo extends Thread {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Conexión perdida con el servidor.");
+            for (ObservadorRed obs : observadores) {
+                RespuestaLobbyDTO res = new RespuestaLobbyDTO("El nombre de usuario o la foto de perfil ya está siendo utilizado");
+                obs.onError(res);
+            }
             conectado = false;
         }
     }

@@ -4,6 +4,7 @@ import Cliente.ClienteHilo;
 import dtos.CartaDTO;
 import dtos.EstadoLobbyDTO;
 import dtos.EstadoPartidaDTO;
+import dtos.RespuestaLobbyDTO;
 import interfaces.ObservadorRed;
 import java.awt.Color;
 import java.awt.Component;
@@ -270,4 +271,9 @@ public class ControladorTablero implements ObservadorRed {
     }
 
     @Override public void enActualizacionLobby(EstadoLobbyDTO estado) {}
+
+    @Override
+    public void onError(RespuestaLobbyDTO res) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

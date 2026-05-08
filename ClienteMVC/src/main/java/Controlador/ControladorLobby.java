@@ -3,6 +3,7 @@ package Controlador;
 import Cliente.ClienteHilo;
 import dtos.EstadoLobbyDTO;
 import dtos.EstadoPartidaDTO;
+import dtos.RespuestaLobbyDTO;
 import interfaces.ObservadorRed;
 import java.awt.Image;
 import java.net.URL;
@@ -12,6 +13,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import vista.FrmConfigurarJugador;
+import vista.FrmInicio;
 import vista.FrmLobby;
 import vista.FrmTablero; 
 
@@ -48,11 +50,44 @@ public class ControladorLobby implements ObservadorRed {
     }
 
     private void conectarAlServidor() {
-        conexion = new ClienteHilo("127.0.0.1", 5000);
-        conexion.agregarObservador(this); 
-        conexion.unirseLobby(partidaId, nombreJugador, rutaAvatar);
-        new Thread(conexion).start();
+        try {
+            System.out.println("a");
+            conexion = new ClienteHilo("127.0.0.1", 5000);
+            conexion.agregarObservador(this); 
+
+            Thread hiloConexion = new Thread(conexion);
+            hiloConexion.start();
+
+            Timer delay = new Timer(500, e -> {
+                if (conexion != null) {
+                    conexion.unirseLobby(partidaId, nombreJugador, rutaAvatar);
+                }
+            });
+            delay.setRepeats(false);
+            delay.start();
+
+        } catch (Exception e) {
+            System.out.println("a");
+            manejarFalloConexion("No se pudo establecer conexión con el servidor.");
+        }
     }
+    
+    private void manejarFalloConexion(String mensaje) {
+            SwingUtilities.invokeLater(() -> {
+                detenerCronometroLobby();
+                JOptionPane.showMessageDialog(vista, mensaje, "Error de Conexión", JOptionPane.ERROR_MESSAGE);
+
+                // Regresar a la pantalla de configuración/inicio
+                new ControladorConfiguracion(new FrmConfigurarJugador()).iniciar();
+                vista.dispose();
+
+                // Limpiar la conexión si existe
+                if (conexion != null) {
+                    // Aquí podrías llamar a un método de cierre en tu ClienteHilo si lo tienes
+                    conexion = null;
+                }
+            });
+        }
 
     private void cargarMiAvatar() {
         try {
@@ -113,6 +148,11 @@ public class ControladorLobby implements ObservadorRed {
     @Override
     public void enActualizacionLobby(EstadoLobbyDTO estado) {
         SwingUtilities.invokeLater(() -> {
+
+            if (estado == null) {
+                manejarFalloConexion("Error al recibir datos de la sala.");
+                return;
+            }
             
             if (estado.isJuegoIniciado()) {
                 detenerCronometroLobby();
@@ -156,4 +196,18 @@ public class ControladorLobby implements ObservadorRed {
     public void enActualizacionPartida(EstadoPartidaDTO estado) {
   
     }
+
+    @Override
+    public void onError(RespuestaLobbyDTO res) {
+        JOptionPane.showMessageDialog(
+            vista,                          
+            res.getRespuesta(),
+            "Vuelve a intentarlo",               
+            JOptionPane.ERROR_MESSAGE        
+        ); 
+        FrmConfigurarJugador frm = new FrmConfigurarJugador();
+        frm.setVisible(true);
+        vista.dispose();
+    }
+    
 }

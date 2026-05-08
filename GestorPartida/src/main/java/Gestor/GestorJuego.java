@@ -20,10 +20,20 @@ public class GestorJuego implements IPuertoAplicacion {
     @Override
     public EstadoLobbyDTO unirseLobby(String idSala, String nombreJugador, String avatar) { 
         lobbysTemporales.putIfAbsent(idSala, new ConcurrentHashMap<>());
-        lobbysTemporales.get(idSala).put(nombreJugador, avatar);
-        
+        Map<String, String> jugadoresEnSala = lobbysTemporales.get(idSala);
+
+        if (jugadoresEnSala.containsKey(nombreJugador)) {
+            throw new RuntimeException("ERROR_NOMBRE_DUPLICADO");
+        }
+
+        if (jugadoresEnSala.containsValue(avatar)) {
+            throw new RuntimeException("ERROR_AVATAR_DUPLICADO");
+        }
+
+        jugadoresEnSala.put(nombreJugador, avatar);
+
         EstadoLobbyDTO estado = new EstadoLobbyDTO();
-        estado.setJugadores(new HashMap<>(lobbysTemporales.get(idSala)));
+        estado.setJugadores(new HashMap<>(jugadoresEnSala));
         estado.setJuegoIniciado(false);
         return estado;
     }
